@@ -12,8 +12,8 @@
     "start": "node server/index.ts",
     "test": "node --test tests/*.test.ts",
     "test:e2e": "playwright test",
-    "format": "prettier --write src shared server tests scripts *.ts *.json *.md docs index.html",
-    "format:check": "prettier --check src shared server tests scripts *.ts *.json *.md docs index.html"
+    "format": "prettier --write src shared server tests scripts .github *.ts *.json *.md docs index.html",
+    "format:check": "prettier --check src shared server tests scripts .github *.ts *.json *.md docs index.html"
   },
   "dependencies": {
     "@fontsource/instrument-sans": "^5.3.0",

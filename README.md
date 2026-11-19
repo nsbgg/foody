@@ -69,3 +69,9 @@ Die Browserprüfungen verwenden das installierte Microsoft Edge und starten eine
 - [shared](./shared/): Datenmodell, Validierung, Einkaufsberechnung und Beispieldaten.
 
 Gestaltungsentscheidungen stehen in [docs/design.md](./docs/design.md). Die Schrift wird lokal mitgeliefert. Tellerabbildungen sind eigene SVG-Illustrationen und werden bei hinterlegten Rezeptfotos durch diese ersetzt.
+
+## Mitarbeit und öffentlicher Quellcode
+
+[CONTRIBUTING.md](./CONTRIBUTING.md) beschreibt Änderungen, Prüfungen und die Pflege der Abhängigkeitshinweise. [SECURITY.md](./SECURITY.md) erklärt die Sicherheitsgrenzen und den Umgang mit vertraulichen Fehlerberichten. [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) enthält die Lizenzhinweise der Abhängigkeiten; diese erteilen keine Lizenz für Foodie selbst. Die Projektlizenz ist noch durch den Eigentümer festzulegen.
+
+Die [GitHub-Prüfung](./.github/workflows/ci.yml) installiert das Lockfile unter Node.js 22.19 und 24 und prüft Formatierung, Tests, Produktionsbuild, Abhängigkeiten und Browserabläufe mit Chromium. Lokale Freigaben und tatsächliche Ergebnisse stehen in [docs/release-gates.md](./docs/release-gates.md). Ein erfolgreicher GitHub-Lauf kann erst nach Veröffentlichung des Repositorys nachgewiesen werden. Konfigurationsvariablen sind in [.env.example](./.env.example) beschrieben; echte Haushaltsdaten und lokale Einstellungen gehören nicht ins Repository.
