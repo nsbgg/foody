@@ -677,7 +677,10 @@ function App() {
         {notice}
       </div>
       {modal && (
-        <Dialog onClose={() => setModal(null)} wide={modal.type === "cook"}>
+        <Dialog
+          onClose={() => setModal(null)}
+          fullscreen={modal.type === "cook"}
+        >
           {modal.type === "edit" ? (
             <Editor
               row={modal.row}

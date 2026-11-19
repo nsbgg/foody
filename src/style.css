@@ -904,78 +904,305 @@ main {
 .add-shopping label {
   flex: 1;
 }
+.dialog.fullscreen {
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100dvh;
+  max-inline-size: none;
+  max-block-size: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: max(16px, env(safe-area-inset-top))
+    max(20px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
+    max(20px, env(safe-area-inset-left));
+  background: #f5f7f4;
+  overflow: clip;
+}
+.dialog.fullscreen > .close {
+  inset-block-start: max(16px, env(safe-area-inset-top));
+  inset-inline-end: max(20px, env(safe-area-inset-right));
+  inline-size: 44px;
+  block-size: 44px;
+  background: #eef2eb;
+}
+.cook {
+  block-size: 100%;
+  min-block-size: 0;
+  min-inline-size: 0;
+  max-inline-size: 1200px;
+  margin-inline: auto;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 16px;
+}
+.cook-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-inline-size: 0;
+  padding-inline-end: 60px;
+  min-block-size: 44px;
+}
+.dialog .cook-header h2 {
+  min-inline-size: 0;
+  margin: 0;
+  font-size: clamp(18px, 2vw, 25px);
+  white-space: nowrap;
+  overflow: clip;
+  text-overflow: ellipsis;
+}
+.cook-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
+.cook-tools button {
+  min-block-size: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 14px;
+}
+.cook-timer-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--green);
+}
 .cook-progress {
   display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  font-size: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 14px;
   color: var(--muted);
-  margin: 20px 0 10px;
 }
-.cook-progress span:last-child {
-  max-width: 250px;
-  text-align: right;
+.cook-progress > span:nth-child(2) {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .cook progress {
-  width: 100%;
-  height: 5px;
+  flex-basis: 100%;
+  inline-size: 100%;
+  block-size: 5px;
   border: 0;
   accent-color: var(--green);
   display: block;
 }
-.cook-step {
-  min-height: 270px;
+.cook-stage {
+  min-block-size: 0;
+  min-inline-size: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.cook-step,
+.cook-panel-body {
+  min-block-size: 0;
+  min-inline-size: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.dialog .cook-step p,
+.dialog .cook-panel-body p {
+  margin: 0;
+  inline-size: min(100%, 36ch);
+  max-inline-size: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: clamp(24px, 3vw, 44px);
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+.dialog p.cook-measure {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  block-size: auto;
+  visibility: hidden;
+  pointer-events: none;
+}
+.cook-page-controls {
   display: flex;
   justify-content: center;
-  flex-direction: column;
-  padding: 24px 0;
-}
-.cook-step p {
-  font-size: clamp(24px, 3vw, 36px);
-  line-height: 1.45;
-  letter-spacing: -0.02em;
-  max-width: 37ch;
-}
-.cook-step h3 {
-  font-size: 32px;
-}
-.cook details {
-  background: #f0f3ed;
-  border-radius: 6px;
-  padding: 14px 18px;
-  font-size: 14px;
-}
-.cook summary {
-  cursor: pointer;
-  min-height: 24px;
-}
-.timer {
-  display: flex;
   align-items: center;
   gap: 12px;
-  margin: 20px 0;
+  min-block-size: 44px;
   font-size: 14px;
+  color: var(--muted);
+}
+.cook-page-controls.single-page {
+  visibility: hidden;
+}
+.cook-page-controls button {
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.cook-nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+.dialog .cook-nav > button {
+  min-block-size: 64px;
+  min-inline-size: 0;
+  font-size: 18px;
+  margin: 0;
+  padding: 12px;
+}
+.cook-complete {
+  max-inline-size: 36ch;
+}
+.dialog .cook-complete h3 {
+  font-size: clamp(24px, 3vw, 40px);
+  margin: 12px 0;
+}
+.dialog .cook-complete p {
+  font-size: 20px;
+}
+.cook-panel {
+  inline-size: min(620px, calc(100% - 32px));
+  block-size: min(660px, calc(100dvh - 32px));
+  max-inline-size: none;
+  max-block-size: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  margin: auto;
+  background: #fff;
+  color: #202c24;
+  overflow: clip;
+}
+.cook-panel[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+}
+.cook-panel:modal {
+  overscroll-behavior: contain;
+}
+.cook-panel::backdrop {
+  background: rgb(20 35 23 / 0.35);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+.cook-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dialog .cook-panel-heading h3 {
+  margin: 0;
+  font-size: 20px;
+}
+.cook-panel-heading .icon-button {
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  flex-shrink: 0;
+}
+.dialog .cook-panel-body p {
+  font-size: 20px;
+  line-height: 1.45;
+}
+.timer {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  min-inline-size: 0;
+  font-size: 20px;
 }
 .timer input {
-  width: 72px;
+  inline-size: 96px;
   margin: 0 !important;
+}
+.dialog .timer button {
+  min-block-size: 48px;
+  margin: 0;
 }
 .timer span[role="status"] {
   color: #852f20;
   font-weight: 600;
 }
-.cook-nav {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+@media (max-width: 600px) {
+  .cook-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-inline-end: 0;
+  }
+  .dialog .cook-header h2 {
+    flex-basis: 100%;
+    padding-inline-end: 56px;
+    min-block-size: 44px;
+    align-content: center;
+  }
+  .cook-tools {
+    margin-inline-start: 0;
+  }
+  .dialog .cook-nav > button {
+    min-block-size: 56px;
+    font-size: 16px;
+    gap: 4px;
+  }
+  .cook-nav {
+    gap: 8px;
+  }
 }
-.cook-nav > button {
-  min-height: 56px;
-  font-size: 16px;
-  margin-top: 0 !important;
-}
-.cook > .muted {
-  margin-top: 20px;
+@media (max-height: 480px) {
+  .dialog.fullscreen {
+    padding-block: max(8px, env(safe-area-inset-top))
+      max(8px, env(safe-area-inset-bottom));
+  }
+  .dialog.fullscreen > .close {
+    inset-block-start: max(8px, env(safe-area-inset-top));
+  }
+  .cook {
+    gap: 6px;
+  }
+  .cook-header {
+    gap: 8px;
+    flex-wrap: nowrap;
+    padding-inline-end: 56px;
+  }
+  .dialog .cook-header h2 {
+    flex-basis: auto;
+    padding-inline-end: 0;
+  }
+  .cook-tools {
+    margin-inline-start: auto;
+  }
+  .cook-tools button {
+    padding-inline: 8px;
+  }
+  .cook-progress {
+    gap: 4px 12px;
+  }
+  .dialog .cook-step p {
+    font-size: 20px;
+    line-height: 1.3;
+  }
+  .cook-stage {
+    gap: 0;
+  }
+  .dialog .cook-nav > button {
+    min-block-size: 48px;
+    font-size: 16px;
+    padding: 8px;
+  }
+  .cook-panel {
+    padding: 12px;
+  }
 }
 .toast {
   position: fixed;
@@ -1417,37 +1644,6 @@ main {
   .dialog .primary,
   .dialog .secondary {
     min-height: 44px;
-  }
-  .cook-step {
-    min-height: 260px;
-    padding: 20px 0;
-  }
-  .cook-step p {
-    font-size: 25px;
-  }
-  .cook-progress {
-    gap: 10px;
-  }
-  .cook-progress span:last-child {
-    max-width: 150px;
-    font-size: 12px;
-  }
-  .cook-nav {
-    gap: 8px;
-  }
-  .cook-nav > button {
-    font-size: 14px;
-    padding: 12px;
-    min-height: 54px;
-  }
-  .timer {
-    flex-wrap: wrap;
-    font-size: 12px;
-    gap: 8px;
-  }
-  .timer .secondary {
-    margin-left: auto;
-    font-size: 12px;
   }
   .conflict-columns {
     grid-template-columns: 1fr;

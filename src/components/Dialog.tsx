@@ -5,10 +5,12 @@ export function Dialog({
   children,
   onClose,
   wide = false,
+  fullscreen = false,
 }: {
   children: React.ReactNode;
   onClose: () => void;
   wide?: boolean;
+  fullscreen?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const headingId = useId();
@@ -21,8 +23,10 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      className={wide ? "dialog wide" : "dialog"}
-      onClose={onClose}
+      className={`dialog${wide ? " wide" : ""}${fullscreen ? " fullscreen" : ""}`}
+      onClose={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
       aria-labelledby={headingId}
     >
       <button

@@ -12,6 +12,12 @@ Desktop: sieben gleich breite Tagesbahnen im Hauptbereich und ein 294px breiter 
 
 Daten: ein Haushalt, sechs vollständig ausgefüllte Beispielrezepte für zwei Portionen, vier Beispieleinträge in der ersten Startwoche. Summen und Einkaufsmengen entstehen ausschließlich aus den Einträgen. Diese Beispieldaten können über die Oberfläche archiviert beziehungsweise entfernt werden.
 
+## Kochmodus im Vollbild
+
+Der Kochmodus füllt den verfügbaren App-Bildschirm als nativer modaler Dialog. Die vorhandene Farbpalette und Schrift bleiben erhalten. Rezeptname und Fortschritt stehen kompakt oben, die aktuelle Anweisung trägt die größte Schrift, Zurück und Weiter bleiben am unteren Rand erreichbar. Erklärtexte und dauerhaft geöffnete Nebenbereiche entfallen.
+
+Lange Anweisungen werden entsprechend der tatsächlich verfügbaren Textfläche auf Seiten verteilt. Zutaten und Timer öffnen eigene Ansichten im Kochmodus. Die Bedienung erfolgt über Tasten statt über Scrollen; kleine Bildschirme, Querformat und vergrößerte Darstellung werden mit Geometrieprüfungen getestet. Vollbild bezeichnet hier den verfügbaren Browser-/PWA-Inhaltsbereich; die Browserleiste wird nicht automatisch ausgeblendet.
+
 ## Synchronisierung
 
 SQLite enthält unabhängig versionierte Objekte für Rezepte, Planeinträge, zusätzliche Einkaufsartikel und Häkchen. IndexedDB speichert den lokalen Stand, ausstehende Änderungen und Konflikte. Operationen besitzen eine eindeutige Kennung; Wiederholungen nach Verbindungsabbrüchen sind idempotent. Bei Versionskonflikten werden lokaler und entfernter Stand nebeneinander angezeigt. Rezeptfassungen liegen zusätzlich unveränderlich im jeweiligen Planeintrag.
