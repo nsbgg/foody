@@ -1,0 +1,33 @@
+node_modules/
+dist/
+data/
+test-results/
+playwright-report/
+.taste-skill/
+# Household data and local backups, wherever a custom DATA_DIR points.
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.db3
+*.db3-*
+*.backup
+*.bak
+# Local configuration and credentials; only documented examples are public.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.npmrc
+coverage/
+blob-report/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
