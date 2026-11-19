@@ -5,7 +5,7 @@ import { z } from "zod";
 import { operationSchema, type Operation } from "../shared/domain.ts";
 import { seedRows } from "../shared/seed.ts";
 import { Store } from "./store.ts";
-import { safeFetch, extractRecipe } from "./importer.ts";
+import { safeFetch, extractRecipe, ImportError } from "./importer.ts";
 import { allowedHosts, trustedHost, trustedApiRequest } from "./origin.ts";
 const hosts = allowedHosts(process.env.ALLOWED_HOSTS);
 mkdirSync(process.env.DATA_DIR || "data", { recursive: true });
@@ -18,6 +18,8 @@ app.disable("x-powered-by");
 app.use((req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Content-Security-Policy", "frame-ancestors 'none'");
+  res.setHeader("X-Frame-Options", "DENY");
   res.setHeader(
     "Permissions-Policy",
     "camera=(), microphone=(), geolocation=(), payment=(), screen-wake-lock=(self)",
@@ -74,7 +76,10 @@ app.post("/api/import", async (req, res) => {
     res.json({ recipe: extractRecipe(page.html, page.url) });
   } catch (error) {
     res.status(422).json({
-      error: error instanceof Error ? error.message : "Import fehlgeschlagen.",
+      error:
+        error instanceof ImportError
+          ? error.message
+          : "Import fehlgeschlagen. Bitte die Rezeptadresse prüfen und erneut versuchen.",
     });
   } finally {
     imports--;

@@ -1,28 +1,33 @@
 import {
   formatAmount,
+  dataSchemas,
+  type Kind,
   type Row,
   type Operation,
   type Recipe,
   type Entry,
 } from "../../shared/domain.ts";
 
-function Version({ data }: { data?: Row["data"] }) {
+function Version({ kind, data }: { kind: Kind; data?: Row["data"] }) {
   if (!data)
     return <p>Dieser Eintrag ist in dieser Fassung nicht vorhanden.</p>;
-  if ("recipe" in data) {
-    const entry = data as Entry;
+  const parsed = dataSchemas[kind].safeParse(data);
+  if (!parsed.success) return <p>Diese Fassung enthält ungültige Daten.</p>;
+  const clean = parsed.data;
+  if (kind === "entry") {
+    const entry = clean as Entry;
     return (
       <>
         <p>
           {entry.date} · {entry.servings} Portionen
         </p>
         {entry.deleted && <p>Aus dem Plan entfernt</p>}
-        <Version data={entry.recipe} />
+        <Version kind="recipe" data={entry.recipe} />
       </>
     );
   }
-  if ("title" in data) {
-    const recipe = data as Recipe;
+  if (kind === "recipe") {
+    const recipe = clean as Recipe;
     return (
       <>
         <p>
@@ -49,7 +54,7 @@ function Version({ data }: { data?: Row["data"] }) {
           ))}
         </ol>
         {recipe.source && <p>Quelle: {recipe.source}</p>}
-        {recipe.image && (
+        {/^https?:\/\//.test(recipe.image) && (
           <img
             src={recipe.image}
             alt="Rezeptbild dieser Fassung"
@@ -59,13 +64,23 @@ function Version({ data }: { data?: Row["data"] }) {
       </>
     );
   }
+  const item = clean as { checked: boolean; text?: string; deleted?: boolean };
   return (
     <>
-      <p>{"text" in data ? data.text : "Einkaufsartikel"}</p>
-      <p>{data.checked ? "Bereits eingekauft" : "Noch einkaufen"}</p>
-      {"deleted" in data && data.deleted && <p>Entfernt</p>}
+      <p>{kind === "extra" ? item.text : "Einkaufsartikel"}</p>
+      <p>{item.checked ? "Bereits eingekauft" : "Noch einkaufen"}</p>
+      {kind === "extra" && item.deleted && <p>Entfernt</p>}
     </>
   );
+}
+
+function conflictTitle(local: Operation) {
+  const parsed = dataSchemas[local.kind].safeParse(local.data);
+  if (!parsed.success) return "Ungültiger Eintrag";
+  if (local.kind === "recipe") return (parsed.data as Recipe).title;
+  if (local.kind === "entry") return (parsed.data as Entry).recipe.title;
+  if (local.kind === "extra") return dataSchemas.extra.parse(local.data).text;
+  return "Einkaufsstatus";
 }
 
 export function ConflictView({
@@ -88,15 +103,7 @@ export function ConflictView({
               Fassungen noch einmal.
             </p>
           )}
-          <h3>
-            {"title" in c.local.data
-              ? c.local.data.title
-              : "recipe" in c.local.data
-                ? c.local.data.recipe.title
-                : "text" in c.local.data
-                  ? c.local.data.text
-                  : "Einkaufsstatus"}
-          </h3>
+          <h3>{conflictTitle(c.local)}</h3>
           <div className="conflict-columns">
             {(["local", "remote"] as const).map((choice) => (
               <div key={choice} className="conflict-version">
@@ -105,6 +112,11 @@ export function ConflictView({
                 </h4>
                 <div className="version-content">
                   <Version
+                    kind={
+                      choice === "local"
+                        ? c.local.kind
+                        : c.remote?.kind || c.local.kind
+                    }
                     data={choice === "local" ? c.local.data : c.remote?.data}
                   />
                 </div>

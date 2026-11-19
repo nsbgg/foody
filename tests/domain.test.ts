@@ -166,6 +166,86 @@ test("rejects invalid portions and invalid entity payloads", () => {
     false,
   );
 });
+
+test("sync parsing strips unvalidated metadata from every entity before persistence", () => {
+  const examples: { kind: Operation["kind"]; data: Operation["data"] }[] = [
+    { kind: "recipe", data: recipe },
+    { kind: "entry", data: entry(recipe) },
+    {
+      kind: "extra",
+      data: {
+        week: "2026-11-16",
+        text: "Synthetic item",
+        checked: false,
+        deleted: false,
+      },
+    },
+    { kind: "check", data: { checked: true } },
+  ];
+  const db = new Store(":memory:");
+  try {
+    for (const example of examples) {
+      const injected = {
+        ...example.data,
+        unvalidatedMetadata: { synthetic: "must not persist" },
+        ...(example.kind === "check"
+          ? {
+              title: { synthetic: true },
+              recipe: { synthetic: true },
+              text: { synthetic: true },
+            }
+          : {}),
+      };
+      const parsed = operationSchema.parse({
+        opId: randomUUID(),
+        id: example.kind,
+        baseRev: 0,
+        kind: example.kind,
+        data: injected,
+        unvalidatedEnvelope: "must not persist",
+      });
+      assert.equal(Object.hasOwn(parsed, "unvalidatedEnvelope"), false);
+      assert.deepEqual(parsed.data, example.data, example.kind);
+      const result = db.apply(parsed);
+      assert.deepEqual(result.accepted?.data, example.data, example.kind);
+    }
+    assert.equal(db.rows().length, 4);
+  } finally {
+    db.db.close();
+  }
+});
+
+test("sync parsing applies nested recipe and ingredient normalization", () => {
+  const parsed = operationSchema.parse({
+    opId: randomUUID(),
+    id: "nested-fixture",
+    baseRev: 0,
+    kind: "entry",
+    data: {
+      ...entry(recipe),
+      recipe: {
+        ...recipe,
+        title: "  Normalized fixture  ",
+        extraMetadata: "synthetic",
+        ingredients: [
+          {
+            name: "  Salt  ",
+            amount: 1,
+            unit: "g",
+            extraMetadata: "synthetic",
+          },
+        ],
+      },
+    },
+  });
+  assert.equal(parsed.kind, "entry");
+  if (parsed.kind !== "entry") assert.fail("expected entry");
+  assert.equal(parsed.data.recipe.title, "Normalized fixture");
+  assert.equal(Object.hasOwn(parsed.data.recipe, "extraMetadata"), false);
+  assert.deepEqual(parsed.data.recipe.ingredients, [
+    { name: "Salt", amount: 1, unit: "g" },
+  ]);
+});
 test("extracts nested JSON-LD sections, ingredients, source and durations", () => {
   const html = `<script type="application/ld+json">${JSON.stringify({ "@graph": [{ "@type": ["Recipe"], name: "Test &amp; Gemüse", recipeYield: "4 Portionen", prepTime: "PT10M", cookTime: "PT1H", recipeIngredient: ["500 g Kartoffeln", "1 Dose Tomaten"], recipeInstructions: [{ "@type": "HowToSection", itemListElement: [{ "@type": "HowToStep", text: "<b>Waschen</b> und schneiden." }, { text: "Garen." }] }], image: { url: "/food.jpg" } }] })}</script>`;
   const r = extractRecipe(html, "https://example.com/rezept");

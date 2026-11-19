@@ -53,6 +53,32 @@ test("HTTP server enforces origins and returns accurate JSON body errors", async
     assert.ok(Date.now() < end, "test server startup timed out");
     await new Promise((resolve) => setTimeout(resolve, 25));
   }
+  const document = await fetch(base);
+  assert.equal(document.headers.get("x-frame-options"), "DENY");
+  assert.equal(
+    document.headers.get("content-security-policy"),
+    "frame-ancestors 'none'",
+  );
+  await document.arrayBuffer();
+  const foreignImport = await fetch(`${base}/api/import`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Origin: "http://attacker.example",
+    },
+    body: JSON.stringify({ url: "http://127.0.0.1" }),
+  });
+  assert.equal(foreignImport.status, 403);
+  await foreignImport.arrayBuffer();
+  const privateImport = await fetch(`${base}/api/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: "http://127.0.0.1" }),
+  });
+  assert.equal(privateImport.status, 422);
+  assert.deepEqual(await privateImport.json(), {
+    error: "Diese Adresse ist keine öffentliche Rezeptseite.",
+  });
   const status = (headers: Record<string, string | undefined>) =>
     new Promise<number | undefined>((resolve, reject) => {
       const req = request(`${base}/api/state`, { headers }, (response) => {

@@ -49,24 +49,29 @@ export type Operation = {
   baseRev: number;
   data: Row["data"];
 };
-export const operationSchema = z
-  .object({
-    opId: z.string().uuid(),
-    id: z.string().min(1).max(500),
-    kind: z.enum(["recipe", "entry", "extra", "check"]),
-    baseRev: z.number().int().nonnegative(),
-    data: z.unknown(),
-  })
-  .superRefine((op, ctx) => {
-    const result = {
-      recipe: recipeSchema,
-      entry: entrySchema,
-      extra: extraSchema,
-      check: checkSchema,
-    }[op.kind].safeParse(op.data);
-    if (!result.success)
-      ctx.addIssue({ code: "custom", message: "Ungültige Daten" });
-  });
+export const dataSchemas = {
+  recipe: recipeSchema,
+  entry: entrySchema,
+  extra: extraSchema,
+  check: checkSchema,
+};
+const operationFields = {
+  opId: z.string().uuid(),
+  id: z.string().min(1).max(500),
+  baseRev: z.number().int().nonnegative(),
+};
+// Parsing must return the validated nested value, including stripped metadata.
+// Merely refining an unknown payload would retain arbitrary unvalidated fields.
+export const operationSchema = z.discriminatedUnion("kind", [
+  z.object({
+    ...operationFields,
+    kind: z.literal("recipe"),
+    data: recipeSchema,
+  }),
+  z.object({ ...operationFields, kind: z.literal("entry"), data: entrySchema }),
+  z.object({ ...operationFields, kind: z.literal("extra"), data: extraSchema }),
+  z.object({ ...operationFields, kind: z.literal("check"), data: checkSchema }),
+]);
 export const dayNames = [
   "Montag",
   "Dienstag",

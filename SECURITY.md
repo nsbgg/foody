@@ -1,5 +1,8 @@
 # Security
 
+The [security review](./docs/security-review.md) records the threat model,
+confirmed findings, fixes, regression coverage and remaining limitations.
+
 Foodie currently has no user accounts or authorization. Anyone able to reach
 the server can read and change household data. The default listener is local;
 use a trusted private network or an authenticated HTTPS reverse proxy when
