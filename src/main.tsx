@@ -788,7 +788,13 @@ function App() {
               }}
             />
           ) : modal.type === "cook" ? (
-            <Cook row={modal.row} />
+            <Cook
+              row={modal.row}
+              onDone={() => {
+                setView("week");
+                setModal(null);
+              }}
+            />
           ) : (
             <ConflictView
               conflicts={state.conflicts}

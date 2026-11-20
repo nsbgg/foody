@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useLayoutEffect, useRef, useId } from "react";
 import {
-  CookingPot,
+  RotateCcw,
   Clock3,
   ChevronLeft,
   ChevronRight,
@@ -14,6 +14,7 @@ import { formatAmount, type Recipe, type Entry } from "../../shared/domain.ts";
 import { useMemo } from "react";
 import { cookingStepSegments } from "../../shared/cook-instructions.ts";
 import { CookText, measureCookText } from "./cook-text.tsx";
+import { CookComplete } from "./CookComplete.tsx";
 import { extractStepDurations } from "../../shared/cook-durations.ts";
 import type { RecipeRow, EntryRow } from "../types.ts";
 import { CookTimer, timerReadout, type TimerMode } from "./CookTimer.tsx";
@@ -166,7 +167,13 @@ function PageControls({
   );
 }
 
-export function Cook({ row }: { row: RecipeRow | EntryRow }) {
+export function Cook({
+  row,
+  onDone,
+}: {
+  row: RecipeRow | EntryRow;
+  onDone: () => void;
+}) {
   const entry = row.kind === "entry" ? (row.data as Entry) : null;
   const recipe = entry?.recipe || (row.data as Recipe);
   const servings = entry?.servings || recipe.servings;
@@ -407,13 +414,9 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
           aria-label="Kochfortschritt"
         />
       </div>
-      <div className="cook-stage">
+      <div className={`cook-stage${done ? " is-complete" : ""}`}>
         {done ? (
-          <div className="cook-step cook-complete">
-            <CookingPot size={40} aria-hidden="true" />
-            <h3>Guten Appetit!</h3>
-            <p>Das Essen ist fertig.</p>
-          </div>
+          <CookComplete />
         ) : (
           <div className="cook-step" ref={stepPages.viewport}>
             <p className="cook-step-text" aria-live="polite" aria-atomic="true">
@@ -438,14 +441,18 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
           onPage={setPage}
         />
       </div>
-      <footer className="cook-nav">
+      <footer className={`cook-nav${done ? " is-complete" : ""}`}>
         <button
           className="secondary"
           disabled={step === 0}
-          onClick={() => setStep(step - 1)}
+          onClick={() => setStep(done ? 0 : step - 1)}
         >
-          <ChevronLeft size={24} aria-hidden="true" />
-          <span>Zurück</span>
+          {done ? (
+            <RotateCcw size={22} aria-hidden="true" />
+          ) : (
+            <ChevronLeft size={24} aria-hidden="true" />
+          )}
+          <span>{done ? "Noch einmal" : "Zurück"}</span>
         </button>
         <button
           className="primary"
@@ -454,11 +461,11 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
             (stepPages.pages.length === 0 ||
               currentPage < stepPages.pages.length - 1)
           }
-          onClick={() => setStep(done ? 0 : step + 1)}
+          onClick={() => (done ? onDone() : setStep(step + 1))}
         >
           <span>
             {done
-              ? "Noch einmal kochen"
+              ? "Zum Wochenplan"
               : step === recipe.steps.length - 1
                 ? "Fertig"
                 : "Nächster Schritt"}

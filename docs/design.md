@@ -22,6 +22,8 @@ Lange Anweisungen werden entsprechend der tatsächlich verfügbaren Textfläche 
 
 ## Mengen und Timer beim Kochen
 
+Der Abschluss des Kochmodus zeigt eine eigene ruhige Tellerillustration mit Kräuterblatt, die große Überschrift „Guten Appetit!“ und zwei kurze Zeilen zum Servieren. Illustration und Text stehen als zusammenhängender Mittelpunkt; bei geringer verfügbarer Höhe wechseln sie nebeneinander. Die Darstellung folgt der vorhandenen Salbei-/Kräutergrünpalette und Instrument Sans, ohne Animationen oder Konfetti. „Noch einmal“ startet das Rezept erneut, „Zum Wochenplan“ schließt den Kochmodus und öffnet die Wochenübersicht. Laufende Timer bleiben im Header erreichbar.
+
 Die Timer-Schaltfläche erscheint nur, wenn der aktuelle Rezeptschritt eine erkennbare Zeitangabe enthält oder noch ein Timer läuft, pausiert beziehungsweise abgelaufen ist. Beim Öffnen wird die erste erkannte Dauer vorausgefüllt; mehrere Dauern eines Schritts stehen in einer kompakten Auswahl. Der Start bleibt ausdrücklich manuell. Sekunden, Minuten und Stunden werden unterstützt; bei Zeitspannen gilt die längere Dauer. Nach dem Beenden verschwindet die Schaltfläche in Schritten ohne Zeitangabe. Laufende Timer werden durch einen Schrittwechsel nicht ersetzt.
 
 Im Kochmodus sind die Scrollbalken des Vollbilddialogs, seiner Zutaten-/Timeransichten und der dahinterliegenden Seite ausgeblendet. Nach dem Schließen gilt wieder die normale Scrollbalkendarstellung der Seite. Die Seiteneinteilung hält die Kochinhalte weiterhin ohne Scrollen erreichbar.

@@ -1088,14 +1088,76 @@ html:has(.dialog.fullscreen:modal),
   padding: 12px;
 }
 .cook-complete {
-  max-inline-size: 36ch;
+  inline-size: 100%;
+  max-inline-size: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 3cqh, 28px);
+  text-align: center;
+}
+.cook-stage.is-complete {
+  container: cook-finish / size;
+  grid-template-rows: minmax(0, 1fr);
+}
+.cook-stage.is-complete > .cook-page-controls {
+  display: none;
+}
+.cook-complete-art {
+  inline-size: clamp(120px, 30cqh, 250px);
+  max-inline-size: 70%;
+  block-size: auto;
+  flex-shrink: 1;
+  min-block-size: 0;
+}
+.cook-complete-copy {
+  flex-shrink: 0;
 }
 .dialog .cook-complete h3 {
-  font-size: clamp(24px, 3vw, 40px);
-  margin: 12px 0;
+  font-size: clamp(32px, 5cqw, 64px);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+  margin: 0 0 16px;
+  text-wrap: balance;
 }
 .dialog .cook-complete p {
-  font-size: 20px;
+  inline-size: auto;
+  max-inline-size: 28ch;
+  font-size: clamp(16px, 2.5cqw, 22px);
+  line-height: 1.55;
+  letter-spacing: 0;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+@container cook-finish (height < 260px) {
+  .cook-complete {
+    flex-direction: row;
+    gap: clamp(16px, 4cqw, 40px);
+  }
+  .cook-complete-art {
+    inline-size: clamp(100px, 45cqh, 160px);
+    max-block-size: 90%;
+    max-inline-size: 30%;
+  }
+  .cook-complete-copy {
+    flex-shrink: 1;
+  }
+  .dialog .cook-complete h3 {
+    font-size: clamp(28px, 5cqw, 42px);
+    margin-block-end: 10px;
+  }
+}
+@media (max-width: 360px) {
+  .cook-nav.is-complete {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .dialog .cook-nav.is-complete > button {
+    min-block-size: 48px;
+    padding-block: 8px;
+  }
 }
 .cook-panel {
   inline-size: min(620px, calc(100% - 32px));
