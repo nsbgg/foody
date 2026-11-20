@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useLayoutEffect, useRef, useId } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useId } from "react";
 import {
   RotateCcw,
   Clock3,
@@ -397,8 +397,8 @@ export function Cook({
           role="status"
           title={
             wake
-              ? "Foodie hält den Bildschirm während des Kochens wach."
-              : "Foodie kann das automatische Abschalten gerade nicht verhindern."
+              ? "Foody hält den Bildschirm während des Kochens wach."
+              : "Foody kann das automatische Abschalten gerade nicht verhindern."
           }
         >
           {wake ? (

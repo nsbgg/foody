@@ -1,4 +1,4 @@
-# Foodie
+# Foody
 
 Eine React-PWA mit Node.js-Backend für einen gemeinsamen Haushalt: Wochenplanung von Montag bis Sonntag, Rezeptstapel, Rezeptimport, Einkaufsliste und ein großer Schritt-für-Schritt-Kochmodus.
 
@@ -34,10 +34,15 @@ IndexedDB speichert die lokale Datenkopie und ausstehende Änderungen. Die Synch
 
 Ein Planeintrag enthält seine eigene Rezeptfassung. Änderungen und Archivieren in der Rezeptbibliothek ändern vorhandene Planeinträge nicht. Über „Ändern → Aktuelle Rezeptfassung übernehmen“ lässt sich ein Eintrag ausdrücklich aktualisieren.
 
+Die Marke und das npm-Projekt heißen **Foody** (`foody`). Bestehende technische
+Speichernamen mit `foodie` bleiben zur Datenkompatibilität erhalten, insbesondere
+`data/foodie.sqlite`, Browserdaten, Bildcache und gespeicherte Kochfortschritte.
+Die Umbenennung legt keinen neuen Haushalt an.
+
 ## Chefkoch-Rezepte importieren
 
 Im Rezeptstapel **Rezept aus dem Internet** wählen, einen vollständigen Chefkoch-Rezeptlink
-einfügen und **Rezept übernehmen** anklicken. Foodie öffnet die Angaben zur
+einfügen und **Rezept übernehmen** anklicken. Foody öffnet die Angaben zur
 Kontrolle im Editor; erst beim Speichern kommt das Rezept in den Stapel. Quelle,
 verfügbare Zutatenmengen, Portionen und Kochschritte werden übernommen. Fehlende
 Angaben bleiben zur Ergänzung offen. Andere Rezeptseiten mit JSON-LD funktionieren
@@ -46,8 +51,8 @@ weiterhin über denselben Import.
 Der Chefkoch-Adapter verwendet die Datenmodelle und Textbereinigung von
 [`chefkoch-api` 1.2.2](https://github.com/gamersi/chefkoch-api). Das upstream als
 veraltet markierte Paket liefert selbst keine Schritte oder Portionenzahlen;
-Foodie ergänzt diese aus strukturierten Seitendaten und passenden HTML-Feldern.
-Der Download läuft ausschließlich über Foodies abgesicherten Importer. Die
+Foody ergänzt diese aus strukturierten Seitendaten und passenden HTML-Feldern.
+Der Download läuft ausschließlich über Foodys abgesicherten Importer. Die
 Netzwerk-, Such-, Crawl- und Dateioperationen des Pakets werden nicht verwendet.
 Dies ist keine offizielle Chefkoch-Schnittstelle; Änderungen oder Zugriffssperren
 der Website können den Import beeinträchtigen. Es werden nur einzelne verlinkte
@@ -93,6 +98,6 @@ Gestaltungsentscheidungen stehen in [docs/design.md](./docs/design.md). Die Schr
 
 ## Mitarbeit und öffentlicher Quellcode
 
-[CONTRIBUTING.md](./CONTRIBUTING.md) beschreibt Änderungen, Prüfungen und die Pflege der Abhängigkeitshinweise. [SECURITY.md](./SECURITY.md) erklärt die Sicherheitsgrenzen und den Umgang mit vertraulichen Fehlerberichten. [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) enthält die Lizenzhinweise der Abhängigkeiten; diese erteilen keine Lizenz für Foodie selbst. Die Projektlizenz ist noch durch den Eigentümer festzulegen.
+[CONTRIBUTING.md](./CONTRIBUTING.md) beschreibt Änderungen, Prüfungen und die Pflege der Abhängigkeitshinweise. [SECURITY.md](./SECURITY.md) erklärt die Sicherheitsgrenzen und den Umgang mit vertraulichen Fehlerberichten. [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) enthält die Lizenzhinweise der Abhängigkeiten; diese erteilen keine Lizenz für Foody selbst. Die Projektlizenz ist noch durch den Eigentümer festzulegen.
 
 Die [GitHub-Prüfung](./.github/workflows/ci.yml) installiert das Lockfile unter Node.js 22.19 und 24 und prüft Formatierung, Tests, Produktionsbuild, Abhängigkeiten und Browserabläufe mit Chromium. Lokale Freigaben und tatsächliche Ergebnisse stehen in [docs/release-gates.md](./docs/release-gates.md). Ein erfolgreicher GitHub-Lauf kann erst nach Veröffentlichung des Repositorys nachgewiesen werden. Konfigurationsvariablen sind in [.env.example](./.env.example) beschrieben; echte Haushaltsdaten und lokale Einstellungen gehören nicht ins Repository.

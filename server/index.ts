@@ -107,7 +107,7 @@ app.use(
       (error.status === 400 || error.status === 413)
         ? error.status
         : 500;
-    if (status === 500) console.error("Foodie: Anfrage fehlgeschlagen (500).");
+    if (status === 500) console.error("Foody: Anfrage fehlgeschlagen (500).");
     res.status(status).json({
       error:
         status === 413
@@ -120,5 +120,5 @@ app.use(
 );
 const port = Number(process.env.PORT) || 4307;
 app.listen(port, process.env.HOST || "127.0.0.1", () =>
-  console.log(`Foodie Backend: http://localhost:${port}`),
+  console.log(`Foody Backend: http://localhost:${port}`),
 );

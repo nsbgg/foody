@@ -1,4 +1,4 @@
-# Foodie
+# Foody
 
 ## Produkt und Gestaltung
 
@@ -28,7 +28,7 @@ Die Timer-Schaltfläche erscheint nur, wenn der aktuelle Rezeptschritt eine erke
 
 Im Kochmodus sind die Scrollbalken des Vollbilddialogs, seiner Zutaten-/Timeransichten und der dahinterliegenden Seite ausgeblendet. Nach dem Schließen gilt wieder die normale Scrollbalkendarstellung der Seite. Die Seiteneinteilung hält die Kochinhalte weiterhin ohne Scrollen erreichbar.
 
-Erkannte Zutatennamen im aktuellen Schritt erhalten die auf die gewählten Portionen skalierte Menge vorangestellt, etwa „200g Linsen“. Gewichts- und Volumeneinheiten stehen kompakt an der Zahl; Stückangaben werden als „1 Zwiebel“ dargestellt. Bereits ausgeschriebene Mengen werden nicht überschrieben oder automatisch skaliert. Bei Teilmengen wie „etwas“, „die Hälfte“ oder „den Rest“ ergänzt Foodie keine Gesamtmenge. Unbekannte Mengen und mehrdeutige Namen erhalten ebenfalls keine Mengenangabe. Die gespeicherte Anleitung bleibt unverändert; die Zutatenansicht enthält die vollständige skalierte Liste.
+Erkannte Zutatennamen im aktuellen Schritt erhalten die auf die gewählten Portionen skalierte Menge vorangestellt, etwa „200g Linsen“. Gewichts- und Volumeneinheiten stehen kompakt an der Zahl; Stückangaben werden als „1 Zwiebel“ dargestellt. Bereits ausgeschriebene Mengen werden nicht überschrieben oder automatisch skaliert. Bei Teilmengen wie „etwas“, „die Hälfte“ oder „den Rest“ ergänzt Foody keine Gesamtmenge. Unbekannte Mengen und mehrdeutige Namen erhalten ebenfalls keine Mengenangabe. Die gespeicherte Anleitung bleibt unverändert; die Zutatenansicht enthält die vollständige skalierte Liste.
 
 Für die gewünschte ADHS-orientierte Lesbarkeit trennt der Kochscreen Sätze mit ruhigem Abstand. Zutaten werden semantisch mit `mark` ausgezeichnet und mit dunklem Kräutergrün, einer sanften Salbeifläche und mittlerem Schriftgewicht hervorgehoben. Keine blinkenden Hinweise, zusätzlichen Bedienelemente oder automatischen Schrittwechsel. Die Messansicht verwendet dieselben Satzblöcke und Hervorhebungen wie die sichtbare Anleitung, damit lange Texte auch mit kräftigerer Schrift ohne Scrollen vollständig erreichbar bleiben.
 

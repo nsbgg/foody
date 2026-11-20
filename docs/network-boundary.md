@@ -1,6 +1,6 @@
 # Network boundary
 
-Foodie has one shared household and no user accounts. Anyone who can access its
+Foody has one shared household and no user accounts. Anyone who can access its
 server can read and edit household data. Keep the service inside a trusted
 private network, or put an access-controlled HTTPS reverse proxy in front of it.
 Publishing this source code does not publish the local household database.

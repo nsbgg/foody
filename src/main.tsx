@@ -66,7 +66,7 @@ function App() {
   const state = useStore();
   const [view, setView] = useState<"week" | "recipes" | "shopping">("week");
   useEffect(() => {
-    document.title = `${view === "week" ? "Wochenplan" : view === "recipes" ? "Gerichte" : "Einkaufsliste"} · Foodie`;
+    document.title = `${view === "week" ? "Wochenplan" : view === "recipes" ? "Gerichte" : "Einkaufsliste"} · Foody`;
   }, [view]);
   const [week, setWeek] = useState(monday());
   const [day, setDay] = useState((new Date().getDay() + 6) % 7);
@@ -290,12 +290,12 @@ function App() {
         Zum Inhalt
       </a>
       <header className="app-header">
-        <a className="brand" href="/" aria-label="Foodie Startseite">
+        <a className="brand" href="/" aria-label="Foody Startseite">
           <span className="brand-mark">
             <CookingPot size={25} />
             <Leaf size={12} />
           </span>
-          foodie<span className="brand-note">Gemeinsam gut essen.</span>
+          foody<span className="brand-note">Gemeinsam gut essen.</span>
         </a>
         <nav aria-label="Hauptnavigation">
           {(
@@ -670,7 +670,7 @@ function App() {
         )}
         <footer className="app-footer">
           <span>Weniger überlegen. Mehr zusammen essen.</span>
-          <span>Foodie · Für eure Alltagsküche</span>
+          <span>Foody · Für eure Alltagsküche</span>
         </footer>
       </main>
       <div className="toast" role="status">

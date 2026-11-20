@@ -146,10 +146,10 @@ export function CookTimer({
         {ready
           ? "Geräte-Timer hier nicht verfügbar"
           : mode === "paused"
-            ? "Timer in Foodie pausiert"
+            ? "Timer in Foody pausiert"
             : mode === "finished"
-              ? "Timer in Foodie beendet"
-              : "Timer läuft in Foodie"}
+              ? "Timer in Foody beendet"
+              : "Timer läuft in Foody"}
       </p>
       <div className="timer-bottom">
         {!ready && (

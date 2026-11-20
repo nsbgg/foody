@@ -1,4 +1,4 @@
-﻿import { defineConfig } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 export default defineConfig({
@@ -16,8 +16,8 @@ export default defineConfig({
         "icon-maskable.png",
       ],
       manifest: {
-        name: "Foodie – Gemeinsam gut essen",
-        short_name: "Foodie",
+        name: "Foody – Gemeinsam gut essen",
+        short_name: "Foody",
         description: "Wochenplan, Rezeptstapel und Kochmodus",
         lang: "de",
         theme_color: "#256347",

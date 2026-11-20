@@ -89,7 +89,7 @@ export function createRecipeFetcher(
               redirect: "manual",
               signal: controller.signal,
               headers: {
-                "User-Agent": "FoodieRecipeImporter/1.0",
+                "User-Agent": "FoodyRecipeImporter/1.0",
                 Accept: "text/html",
               },
             }),
