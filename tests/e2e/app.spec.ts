@@ -11,7 +11,7 @@ async function ready(page: Page) {
   await page.goto("/");
   await expect(
     page.getByText("Alles synchronisiert", { exact: true }),
-  ).toBeVisible();
+  ).toHaveText("Alles synchronisiert");
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });
@@ -110,10 +110,10 @@ test("mobile shows one day and does not overflow at 390px", async ({
 test("pointer drag schedules a recipe in another day", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await ready(page);
-  const handle = page.locator(".stack-list .drag-handle").first();
+  const card = page.locator(".stack-list .recipe-card").first();
   const target = page.locator(".day-column").last();
   const before = await target.locator(".meal").count();
-  const a = await handle.boundingBox(),
+  const a = await card.boundingBox(),
     b = await target.boundingBox();
   await page.mouse.move(a!.x + a!.width / 2, a!.y + a!.height / 2);
   await page.mouse.down();
@@ -147,10 +147,9 @@ test("offline changes survive reload and sync when connection returns", async ({
     page.getByRole("button", { name: title, exact: true }),
   ).toBeVisible();
   await context.setOffline(false);
-  await page.locator(".sync-state > .text-button").first().click();
   await expect(
     page.getByText("Alles synchronisiert", { exact: true }),
-  ).toBeVisible();
+  ).toHaveText("Alles synchronisiert");
   const { rows } = await (await request.get("/api/state")).json();
   expect(rows.some((r: any) => r.data.title === title)).toBe(true);
 });
@@ -183,7 +182,6 @@ test("conflicting edits preserve both versions and allow explicit selection", as
     },
   });
   await context.setOffline(false);
-  await page.locator(".sync-state > .text-button").first().click();
   await expect(
     page.getByRole("button", { name: "Konflikte (1)" }),
   ).toBeVisible();
@@ -199,7 +197,7 @@ test("conflicting edits preserve both versions and allow explicit selection", as
   await page.getByRole("button", { name: "Schließen", exact: true }).click();
   await expect(
     page.getByText("Alles synchronisiert", { exact: true }),
-  ).toBeVisible();
+  ).toHaveText("Alles synchronisiert");
   const { rows } = await (await request.get("/api/state")).json();
   expect(rows.find((r: any) => r.id === base.id).data.title).toContain("lokal");
 });
@@ -226,7 +224,7 @@ test("recipe editing leaves planned snapshots unchanged and archive is reversibl
   await page.getByRole("button", { name: "Gericht speichern" }).click();
   await expect(
     page.getByText("Alles synchronisiert", { exact: true }),
-  ).toBeVisible();
+  ).toHaveText("Alles synchronisiert");
   const { rows } = await (await request.get("/api/state")).json();
   expect(
     rows.some(

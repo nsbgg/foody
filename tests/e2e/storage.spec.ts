@@ -4,7 +4,7 @@ async function ready(page: Page) {
   await page.goto("/");
   await expect(
     page.getByText("Alles synchronisiert", { exact: true }),
-  ).toBeVisible();
+  ).toHaveText("Alles synchronisiert");
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });
@@ -46,10 +46,9 @@ test("two offline tabs retain independent edits after both tabs close and reload
     fresh.getByRole("button", { name: b, exact: true }),
   ).toBeVisible();
   await context.setOffline(false);
-  await fresh.locator(".sync-state > .text-button").first().click();
   await expect(
     fresh.getByText("Alles synchronisiert", { exact: true }),
-  ).toBeVisible();
+  ).toHaveText("Alles synchronisiert");
   const { rows } = await (await request.get("/api/state")).json();
   expect(rows.some((r: any) => r.data.title === a)).toBe(true);
   expect(rows.some((r: any) => r.data.title === b)).toBe(true);
@@ -84,7 +83,7 @@ test("one failed IndexedDB write keeps the editor open and a second save recover
   await expect(page.locator("dialog")).toHaveCount(0);
   await expect(
     page.getByText("Alles synchronisiert", { exact: true }),
-  ).toBeVisible();
+  ).toHaveText("Alles synchronisiert");
   const { rows } = await (await request.get("/api/state")).json();
   expect(rows.some((r: any) => r.data.title === title)).toBe(true);
 });

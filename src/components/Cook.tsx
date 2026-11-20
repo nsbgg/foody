@@ -15,6 +15,7 @@ import { useMemo } from "react";
 import { cookingStepSegments } from "../../shared/cook-instructions.ts";
 import { CookText, measureCookText } from "./cook-text.tsx";
 import { CookComplete } from "./CookComplete.tsx";
+import { ThemeToggle } from "./ThemeToggle.tsx";
 import { extractStepDurations } from "../../shared/cook-durations.ts";
 import type { RecipeRow, EntryRow } from "../types.ts";
 import { CookTimer, timerReadout, type TimerMode } from "./CookTimer.tsx";
@@ -36,6 +37,11 @@ function useMeasuredPages(
   text: string,
   active = true,
   parts?: ReturnType<typeof cookingStepSegments>,
+  renderMeasure?: (
+    probe: HTMLParagraphElement,
+    text: string,
+    start: number,
+  ) => void,
 ) {
   const viewport = useRef<HTMLDivElement>(null);
   const measure = useRef<HTMLParagraphElement>(null);
@@ -70,6 +76,12 @@ function useMeasuredPages(
               parts,
               offsets[start],
               offsets[start + count],
+            );
+          else if (renderMeasure)
+            renderMeasure(
+              probe,
+              characters.slice(start, start + count).join(""),
+              offsets[start],
             );
           else
             probe.textContent = characters.slice(start, start + count).join("");
@@ -122,8 +134,20 @@ function useMeasuredPages(
       observer.disconnect();
       document.fonts.removeEventListener("loadingdone", paginate);
     };
-  }, [text, active, parts]);
+  }, [text, active, parts, renderMeasure]);
   return { viewport, measure, pages };
+}
+
+function ingredientFragments(lines: string[], text: string, start: number) {
+  const end = start + text.length;
+  let offset = 0;
+  return lines.flatMap((line, index) => {
+    const from = Math.max(start, offset);
+    const to = Math.min(end, offset + line.length);
+    const fragment = line.slice(from - offset, to - offset);
+    offset += line.length + 2;
+    return to > from ? [{ index, text: fragment }] : [];
+  });
 }
 
 function PageControls({
@@ -178,6 +202,22 @@ export function Cook({
   const recipe = entry?.recipe || (row.data as Recipe);
   const servings = entry?.servings || recipe.servings;
   const key = `foodie-cook:${row.id}`;
+  const ingredientKeys = useMemo(
+    () =>
+      recipe.ingredients.map(
+        (ingredient, index) => `${index}:${JSON.stringify(ingredient)}`,
+      ),
+    [recipe.ingredients],
+  );
+  const [checkedIngredients, setCheckedIngredients] = useState<string[]>(() => {
+    const saved = savedCook(key).checkedIngredients;
+    return Array.isArray(saved)
+      ? saved.filter(
+          (item): item is string =>
+            typeof item === "string" && ingredientKeys.includes(item),
+        )
+      : [];
+  });
   const [step, setStep] = useState(() => {
     try {
       const saved = Number(JSON.parse(localStorage.getItem(key) || "{}").step);
@@ -237,9 +277,9 @@ export function Cook({
   );
   const stepText = stepParts.map((part) => part.text).join("");
   const stepPages = useMeasuredPages(stepText, true, stepParts);
-  const ingredientText =
-    recipe.ingredients
-      .map((ingredient) =>
+  const ingredientLines = useMemo(
+    () =>
+      recipe.ingredients.map((ingredient) =>
         [
           formatAmount(
             ingredient.amount === null
@@ -251,11 +291,33 @@ export function Cook({
         ]
           .filter(Boolean)
           .join(" "),
-      )
-      .join("\n\n") || "Keine Zutaten hinterlegt.";
+      ),
+    [recipe.ingredients, servings, recipe.servings],
+  );
+  const ingredientText = ingredientLines.join("\n\n");
+  const measureIngredients = useMemo(
+    () => (probe: HTMLParagraphElement, text: string, start: number) => {
+      const rows = ingredientFragments(ingredientLines, text, start).map(
+        (fragment) => {
+          const label = document.createElement("label");
+          label.className = "cook-ingredient-row";
+          const checkbox = document.createElement("span");
+          checkbox.className = "cook-ingredient-box";
+          const name = document.createElement("span");
+          name.textContent = fragment.text;
+          label.append(checkbox, name);
+          return label;
+        },
+      );
+      probe.replaceChildren(...rows);
+    },
+    [ingredientLines],
+  );
   const ingredientPages = useMeasuredPages(
     ingredientText,
     panel === "ingredients",
+    undefined,
+    measureIngredients,
   );
   const currentPage = Math.min(page, Math.max(0, stepPages.pages.length - 1));
   const currentTextStart = stepPages.pages
@@ -265,6 +327,17 @@ export function Cook({
     ingredientPage,
     Math.max(0, ingredientPages.pages.length - 1),
   );
+  const ingredientPageStart = ingredientPages.pages
+    .slice(0, currentIngredientPage)
+    .reduce((sum, text) => sum + text.length, 0);
+  const visibleIngredients = ingredientFragments(
+    ingredientLines,
+    ingredientPages.pages[currentIngredientPage] || "",
+    ingredientPageStart,
+  );
+  const readyIngredients = ingredientKeys.filter((key) =>
+    checkedIngredients.includes(key),
+  ).length;
 
   useLayoutEffect(() => {
     setPage(0);
@@ -278,10 +351,16 @@ export function Cook({
     try {
       localStorage.setItem(
         key,
-        JSON.stringify({ step, deadline, pausedSeconds, durationSeconds }),
+        JSON.stringify({
+          step,
+          deadline,
+          pausedSeconds,
+          durationSeconds,
+          checkedIngredients,
+        }),
       );
     } catch {}
-  }, [step, deadline, pausedSeconds, durationSeconds, key]);
+  }, [step, deadline, pausedSeconds, durationSeconds, checkedIngredients, key]);
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
@@ -351,6 +430,7 @@ export function Cook({
       <header className="cook-header">
         <h2 title={recipe.title}>{recipe.title}</h2>
         <div className="cook-tools">
+          <ThemeToggle />
           <button className="secondary" onClick={() => setPanel("ingredients")}>
             <ListChecks size={18} aria-hidden="true" />
             Zutaten
@@ -445,7 +525,10 @@ export function Cook({
         <button
           className="secondary"
           disabled={step === 0}
-          onClick={() => setStep(done ? 0 : step - 1)}
+          onClick={() => {
+            if (done) setCheckedIngredients([]);
+            setStep(done ? 0 : step - 1);
+          }}
         >
           {done ? (
             <RotateCcw size={22} aria-hidden="true" />
@@ -484,11 +567,19 @@ export function Cook({
           onClose={() => setPanel(null)}
         >
           <header className="cook-panel-heading">
-            <h3 id={panelHeading}>
-              {panel === "ingredients"
-                ? `Zutaten · ${servings} Portionen`
-                : "Timer"}
-            </h3>
+            {panel === "ingredients" ? (
+              <div className="ingredient-panel-title">
+                <span className="ingredient-panel-icon" aria-hidden="true">
+                  <ListChecks size={23} />
+                </span>
+                <div>
+                  <h3 id={panelHeading}>Zutaten</h3>
+                  <p>{servings} Portionen</p>
+                </div>
+              </div>
+            ) : (
+              <h3 id={panelHeading}>Timer</h3>
+            )}
             <button
               className="icon-button"
               aria-label="Zurück zum Schritt"
@@ -500,26 +591,86 @@ export function Cook({
           </header>
           {panel === "ingredients" ? (
             <>
+              <div className="ingredient-panel-progress">
+                <div role="status">
+                  <span>
+                    {ingredientKeys.length > 0 &&
+                    readyIngredients === ingredientKeys.length
+                      ? "Alles bereit zum Kochen"
+                      : "Zutaten bereitstellen"}
+                  </span>
+                  <strong>
+                    {readyIngredients} / {ingredientKeys.length}
+                  </strong>
+                </div>
+                <progress
+                  aria-label="Bereitgestellte Zutaten"
+                  value={readyIngredients}
+                  max={Math.max(1, ingredientKeys.length)}
+                />
+              </div>
               <div className="cook-panel-body" ref={ingredientPages.viewport}>
+                {ingredientLines.length ? (
+                  <ul
+                    className="cook-panel-text cook-ingredient-list"
+                    aria-label="Zutaten zum Bereitstellen"
+                  >
+                    {visibleIngredients.map(({ index, text }) => {
+                      const ingredientKey = ingredientKeys[index];
+                      const checked =
+                        checkedIngredients.includes(ingredientKey);
+                      return (
+                        <li key={ingredientKey}>
+                          <label
+                            className={`cook-ingredient-row${checked ? " is-checked" : ""}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              aria-label={ingredientLines[index]}
+                              onChange={(event) => {
+                                const next = event.target.checked;
+                                setCheckedIngredients((previous) =>
+                                  next
+                                    ? [...previous, ingredientKey]
+                                    : previous.filter(
+                                        (key) => key !== ingredientKey,
+                                      ),
+                                );
+                              }}
+                            />
+                            <span className="cook-ingredient-label">
+                              {text}
+                            </span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p>Keine Zutaten hinterlegt.</p>
+                )}
                 <p
-                  className="cook-panel-text"
-                  aria-live="polite"
-                  aria-atomic="true"
-                >
-                  {ingredientPages.pages[currentIngredientPage] || ""}
-                </p>
-                <p
-                  className="cook-measure"
+                  className="cook-measure cook-ingredient-list"
                   ref={ingredientPages.measure}
                   aria-hidden="true"
                 />
               </div>
-              <PageControls
-                page={currentIngredientPage}
-                count={ingredientPages.pages.length}
-                onPage={setIngredientPage}
-                ingredients
-              />
+              <footer className="ingredient-panel-footer">
+                <PageControls
+                  page={currentIngredientPage}
+                  count={ingredientPages.pages.length}
+                  onPage={setIngredientPage}
+                  ingredients
+                />
+                <button
+                  className="primary"
+                  onClick={() => panelRef.current?.close()}
+                >
+                  Weiterkochen
+                  <ChevronRight size={18} aria-hidden="true" />
+                </button>
+              </footer>
             </>
           ) : (
             <CookTimer

@@ -12,9 +12,7 @@ import {
   Clock3,
   Users,
   Search,
-  GripVertical,
   CookingPot,
-  Leaf,
   Check,
   RefreshCw,
   Download,
@@ -30,7 +28,7 @@ import "@fontsource/instrument-sans/500.css";
 import "@fontsource/instrument-sans/600.css";
 import "./style.css";
 import { PwaUpdate } from "./PwaUpdate.tsx";
-import { initStore, useStore, change, sync, resolveConflict } from "./store.ts";
+import { initStore, useStore, change, resolveConflict } from "./store.ts";
 import {
   dateKey,
   monday,
@@ -55,8 +53,9 @@ import { PlanDialog } from "./components/PlanDialog.tsx";
 import { Shopping } from "./components/Shopping.tsx";
 import { Cook } from "./components/Cook.tsx";
 import { ConflictView } from "./components/ConflictView.tsx";
+import { ThemeToggle } from "./components/ThemeToggle.tsx";
 type Modal =
-  | { type: "recipe"; row: RecipeRow }
+  | { type: "recipe"; row: RecipeRow | EntryRow }
   | { type: "edit"; row?: RecipeRow; draft?: Recipe }
   | { type: "import" }
   | { type: "plan"; row: RecipeRow | EntryRow }
@@ -65,6 +64,7 @@ type Modal =
 function App() {
   const state = useStore();
   const [view, setView] = useState<"week" | "recipes" | "shopping">("week");
+  const [accountOpen, setAccountOpen] = useState(false);
   useEffect(() => {
     document.title = `${view === "week" ? "Wochenplan" : view === "recipes" ? "Gerichte" : "Einkaufsliste"} · Foody`;
   }, [view]);
@@ -79,6 +79,14 @@ function App() {
   const weekKey = dateKey(week),
     dates = dayNames.map((_, i) => dateKey(addDays(week, i)));
   const recipes = state.rows.filter((r) => r.kind === "recipe") as RecipeRow[];
+  const detailSource =
+    modal?.type === "recipe"
+      ? modal.row.kind === "entry"
+        ? recipes.find(
+            (recipe) => recipe.id === (modal.row as EntryRow).data.recipeId,
+          )
+        : (modal.row as RecipeRow)
+      : undefined;
   const entries = (state.rows.filter((r) => r.kind === "entry") as EntryRow[])
     .filter((r) => !r.data.deleted && dates.includes(r.data.date))
     .sort((a, b) => a.data.order - b.data.order || a.id.localeCompare(b.id));
@@ -147,17 +155,32 @@ function App() {
     x: number;
     y: number;
     active: boolean;
+    source: HTMLElement;
+    offsetX: number;
+    offsetY: number;
+    preview: HTMLElement | null;
   } | null>(null);
   const [dropDay, setDropDay] = useState("");
-  function pointerDown(e: React.PointerEvent, row: RecipeRow | EntryRow) {
-    if (e.button !== 0) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
+  const suppressDragClick = useRef(false);
+  function pointerDown(
+    e: React.PointerEvent<HTMLElement>,
+    row: RecipeRow | EntryRow,
+  ) {
+    if (e.button !== 0 || !e.isPrimary) return;
+    suppressDragClick.current = false;
+    // Capture on the pressed child so a normal button click keeps its target.
+    (e.target as Element).setPointerCapture(e.pointerId);
+    const bounds = e.currentTarget.getBoundingClientRect();
     dragRef.current = {
       row,
       pointer: e.pointerId,
       x: e.clientX,
       y: e.clientY,
       active: false,
+      source: e.currentTarget,
+      offsetX: e.clientX - bounds.left,
+      offsetY: e.clientY - bounds.top,
+      preview: null,
     };
   }
   function pointerMove(e: React.PointerEvent) {
@@ -165,6 +188,31 @@ function App() {
     if (!d || d.pointer !== e.pointerId) return;
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) d.active = true;
     if (!d.active) return;
+    if (!d.preview) {
+      const bounds = d.source.getBoundingClientRect();
+      // Preserve the layout context for cards in the recipe library.
+      const preview = document.createElement("div");
+      preview.className = `${d.source.parentElement?.className || ""} card-drag-preview`;
+      preview.setAttribute("aria-hidden", "true");
+      preview.inert = true;
+      preview.style.width = `${bounds.width}px`;
+      preview.style.height = `${bounds.height}px`;
+      const copy = d.source.cloneNode(true) as HTMLElement;
+      for (const element of [
+        copy,
+        ...copy.querySelectorAll("[id], [data-entry], [data-date]"),
+      ]) {
+        element.removeAttribute("id");
+        element.removeAttribute("data-entry");
+        element.removeAttribute("data-date");
+      }
+      preview.append(copy);
+      document.body.append(preview);
+      d.preview = preview;
+      d.source.classList.add("card-drag-source");
+    }
+    d.preview.style.transform = `translate3d(${e.clientX - d.offsetX}px, ${e.clientY - d.offsetY}px, 0)`;
+    suppressDragClick.current = true;
     const target = document
       .elementFromPoint(e.clientX, e.clientY)
       ?.closest<HTMLElement>("[data-date]");
@@ -186,32 +234,41 @@ function App() {
     cancelDrag();
   }
   function cancelDrag() {
+    dragRef.current?.preview?.remove();
+    dragRef.current?.source.classList.remove("card-drag-source");
     dragRef.current = null;
     setDropDay("");
     document.documentElement.classList.remove("dragging");
+  }
+  function cardDragEvents(row: RecipeRow | EntryRow) {
+    return {
+      onPointerDown: (event: React.PointerEvent<HTMLElement>) =>
+        pointerDown(event, row),
+      onPointerMove: pointerMove,
+      onPointerUp: pointerEnd,
+      onPointerCancel: cancelDrag,
+      onLostPointerCapture: cancelDrag,
+      onDragStart: (event: React.DragEvent<HTMLElement>) =>
+        event.preventDefault(),
+      onClickCapture: (event: React.MouseEvent<HTMLElement>) => {
+        if (!suppressDragClick.current || event.detail === 0) return;
+        event.preventDefault();
+        event.stopPropagation();
+        suppressDragClick.current = false;
+      },
+    };
   }
   useEffect(() => {
     const f = (e: KeyboardEvent) => {
       if (e.key === "Escape") cancelDrag();
     };
     window.addEventListener("keydown", f);
-    return () => window.removeEventListener("keydown", f);
+    return () => {
+      window.removeEventListener("keydown", f);
+      dragRef.current?.preview?.remove();
+      document.documentElement.classList.remove("dragging");
+    };
   }, []);
-  function handle(row: RecipeRow | EntryRow) {
-    return (
-      <button
-        className="drag-handle"
-        aria-label={`${row.kind === "recipe" ? (row.data as Recipe).title : (row.data as Entry).recipe.title} verschieben. Alternativ Einplanen verwenden.`}
-        onPointerDown={(e) => pointerDown(e, row)}
-        onPointerMove={pointerMove}
-        onPointerUp={pointerEnd}
-        onPointerCancel={cancelDrag}
-        onLostPointerCapture={cancelDrag}
-      >
-        <GripVertical size={17} />
-      </button>
-    );
-  }
   const weekNav = (
     <div className="week-nav">
       <button
@@ -249,7 +306,7 @@ function App() {
   );
   function recipeCard(row: RecipeRow) {
     return (
-      <article className="recipe-card" key={row.id}>
+      <article className="recipe-card" key={row.id} {...cardDragEvents(row)}>
         <button
           className="image-button"
           onClick={() => setModal({ type: "recipe", row })}
@@ -260,7 +317,6 @@ function App() {
         <div className="recipe-copy">
           <div className="card-top">
             <span className="category">{row.data.category}</span>
-            {handle(row)}
           </div>
           <button
             className="title-button"
@@ -290,13 +346,18 @@ function App() {
         Zum Inhalt
       </a>
       <header className="app-header">
-        <a className="brand" href="/" aria-label="Foody Startseite">
-          <span className="brand-mark">
-            <CookingPot size={25} />
-            <Leaf size={12} />
-          </span>
-          foody<span className="brand-note">Gemeinsam gut essen.</span>
-        </a>
+        <div className="brand">
+          <a href="/" aria-label="Foody Startseite">
+            <img
+              className="brand-logo"
+              src="/foody_green.svg"
+              alt="Foody"
+              width={84}
+              height={42}
+            />
+          </a>
+          <span className="brand-note">Gemeinsam gut essen.</span>
+        </div>
         <nav aria-label="Hauptnavigation">
           {(
             [
@@ -316,56 +377,66 @@ function App() {
             </button>
           ))}
         </nav>
-        <span className="household">
-          <span className="avatar">Z</span>Unser Zuhause
-        </span>
-      </header>
-      <main id="main">
-        <div className="page-heading">
-          <div>
-            <h1>
-              {view === "week"
-                ? "Eine gute Woche beginnt hier."
-                : view === "recipes"
-                  ? "Was kochen wir als Nächstes?"
-                  : "Alles für deine Kochwoche."}
-            </h1>
-            <p>
-              {view === "week"
-                ? "Lieblingsgerichte sammeln. Die Woche entspannt planen."
-                : view === "recipes"
-                  ? "Deine Rezepte, immer griffbereit."
-                  : "Aus deinem Wochenplan, passend für eure Portionen."}
+        <div className="header-actions">
+          <ThemeToggle />
+          <button
+            type="button"
+            className="household"
+            popoverTarget="account-menu"
+            title="Account-Menü"
+            aria-controls="account-menu"
+            aria-expanded={accountOpen}
+          >
+            <span className="avatar">Z</span>
+            <span className="sr-only">Account-Menü</span>
+          </button>
+          <div
+            id="account-menu"
+            className="account-menu"
+            popover="auto"
+            role="region"
+            aria-label="Account"
+            onToggle={(event) =>
+              setAccountOpen(event.currentTarget.matches(":popover-open"))
+            }
+          >
+            <p className="account-menu-title">Unser Zuhause</p>
+            <p className="account-menu-label">Synchronisierung</p>
+            <span
+              className="sync-status"
+              role="status"
+              title="Automatischer Datenabgleich"
+            >
+              {state.status === "Alles synchronisiert" ? (
+                <Check size={15} />
+              ) : state.status.startsWith("Offline") ? (
+                <WifiOff size={15} />
+              ) : (
+                <RefreshCw size={15} />
+              )}
+              {state.status}
+            </span>
+            <p className="account-menu-hint">
+              Deine Änderungen werden automatisch im Hintergrund abgeglichen.
             </p>
           </div>
-          <button
-            className="primary"
-            onClick={() => setModal({ type: "edit" })}
-          >
-            <Plus size={17} />
-            Neues Gericht
-          </button>
         </div>
-        {!state.loaded ? (
-          <div className="empty">Deine Küche wird geladen …</div>
-        ) : (
-          <>
-            {state.error && (
-              <p className="error" role="alert">
-                {state.error}
-              </p>
-            )}
-            <div className="utility-row">
-              <div className="scope">
-                <span className="status-dot" />
-                Unser Wochenplan
-              </div>
+      </header>
+      <main id="main">
+        <div
+          className={`page-heading${view === "shopping" ? " shopping-heading" : ""}`}
+        >
+          <h1>
+            {view === "week"
+              ? "Wochenplan"
+              : view === "recipes"
+                ? "Gerichte"
+                : "Einkaufsliste"}
+          </h1>
+          <div className="page-heading-actions">
+            {state.loaded && (
               <div className="sync-state">
                 <PwaUpdate />
-                <button className="text-button" onClick={() => void sync()}>
-                  <RefreshCw size={13} />
-                  {state.status}
-                </button>
                 {state.conflicts.length > 0 && (
                   <button onClick={() => setModal({ type: "conflicts" })}>
                     Konflikte ({state.conflicts.length})
@@ -384,7 +455,25 @@ function App() {
                   </button>
                 )}
               </div>
-            </div>
+            )}
+            <button
+              className="secondary"
+              onClick={() => setModal({ type: "edit" })}
+            >
+              <Plus size={17} />
+              Neues Gericht
+            </button>
+          </div>
+        </div>
+        {!state.loaded ? (
+          <div className="empty">Deine Küche wird geladen …</div>
+        ) : (
+          <>
+            {state.error && (
+              <p className="error" role="alert">
+                {state.error}
+              </p>
+            )}
             {view === "week" ? (
               <>
                 <div className="planner-layout">
@@ -442,51 +531,67 @@ function App() {
                                   className="meal"
                                   key={row.id}
                                   data-entry={row.id}
+                                  {...cardDragEvents(row)}
                                 >
-                                  <FoodArt
-                                    recipe={row.data.recipe}
-                                    index={recipes.findIndex(
-                                      (r) => r.id === row.data.recipeId,
-                                    )}
-                                  />
-                                  <div className="meal-body">
-                                    <span className="meal-category">
-                                      {row.data.recipe.category}
-                                    </span>
-                                    <button
-                                      className="title-button"
-                                      onClick={() =>
-                                        setModal({ type: "cook", row })
-                                      }
-                                    >
-                                      {row.data.recipe.title}
-                                    </button>
-                                    <span className="meal-meta">
-                                      <Clock3 size={12} />
-                                      {row.data.recipe.minutes} Min.{" "}
-                                      <Users size={12} />
-                                      {row.data.servings}
-                                    </span>
-                                    <div className="meal-actions">
-                                      {handle(row)}
+                                  <div className="meal-layout">
+                                    <FoodArt
+                                      recipe={row.data.recipe}
+                                      index={recipes.findIndex(
+                                        (r) => r.id === row.data.recipeId,
+                                      )}
+                                    />
+                                    <div className="meal-body">
+                                      <span className="meal-category">
+                                        {row.data.recipe.category}
+                                      </span>
                                       <button
-                                        className="text-button"
+                                        className="title-button"
                                         onClick={() =>
-                                          setModal({ type: "plan", row })
+                                          setModal({ type: "recipe", row })
                                         }
-                                        aria-label={`Ändern: ${row.data.recipe.title}`}
                                       >
-                                        Ändern
+                                        {row.data.recipe.title}
                                       </button>
-                                      <button
-                                        className="icon-button"
-                                        onClick={() =>
-                                          setModal({ type: "cook", row })
-                                        }
-                                        aria-label={`${row.data.recipe.title} kochen`}
-                                      >
-                                        <Play size={14} />
-                                      </button>
+                                      <span className="meal-meta">
+                                        <span>
+                                          <Clock3 size={13} />
+                                          {row.data.recipe.minutes} Min.
+                                        </span>
+                                        <span
+                                          title={`${row.data.servings} Portionen`}
+                                        >
+                                          <Users size={13} />
+                                          {row.data.servings}
+                                        </span>
+                                      </span>
+                                      <div className="meal-actions">
+                                        <button
+                                          className="text-button"
+                                          onClick={() =>
+                                            setModal({ type: "plan", row })
+                                          }
+                                          aria-label={`Ändern: ${row.data.recipe.title}`}
+                                          title="Eintrag ändern"
+                                        >
+                                          <Pencil size={15} />
+                                          <span className="meal-action-label">
+                                            Ändern
+                                          </span>
+                                        </button>
+                                        <button
+                                          className="icon-button"
+                                          onClick={() =>
+                                            setModal({ type: "cook", row })
+                                          }
+                                          aria-label={`${row.data.recipe.title} kochen`}
+                                          title="Kochen"
+                                        >
+                                          <Play size={15} />
+                                          <span className="meal-action-label">
+                                            Kochen
+                                          </span>
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
                                 </article>
@@ -668,10 +773,6 @@ function App() {
             )}
           </>
         )}
-        <footer className="app-footer">
-          <span>Weniger überlegen. Mehr zusammen essen.</span>
-          <span>Foody · Für eure Alltagsküche</span>
-        </footer>
       </main>
       <div className="toast" role="status">
         {notice}
@@ -697,21 +798,29 @@ function App() {
           ) : modal.type === "recipe" ? (
             <RecipeDetail
               row={modal.row}
-              onEdit={() => setModal({ type: "edit", row: modal.row })}
+              onEdit={
+                detailSource
+                  ? () => setModal({ type: "edit", row: detailSource })
+                  : undefined
+              }
               onPlan={() => setModal({ type: "plan", row: modal.row })}
               onCook={() => setModal({ type: "cook", row: modal.row })}
-              onArchive={async () => {
-                const saved = await change(
-                  "recipe",
-                  modal.row.id,
-                  {
-                    ...modal.row.data,
-                    archived: !modal.row.data.archived,
-                  },
-                  modal.row.rev,
-                );
-                if (saved) setModal(null);
-              }}
+              onArchive={
+                modal.row.kind === "recipe" && detailSource
+                  ? async () => {
+                      const saved = await change(
+                        "recipe",
+                        detailSource.id,
+                        {
+                          ...detailSource.data,
+                          archived: !detailSource.data.archived,
+                        },
+                        detailSource.rev,
+                      );
+                      if (saved) setModal(null);
+                    }
+                  : undefined
+              }
             />
           ) : modal.type === "plan" ? (
             <PlanDialog

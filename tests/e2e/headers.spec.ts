@@ -34,7 +34,13 @@ test("Foody branding reaches navigation titles and the installable manifest with
     exact: true,
   });
   await expect(brand).toBeVisible();
-  await expect(brand).toContainText("foody");
+  await expect(
+    brand.getByRole("img", { name: "Foody", exact: true }),
+  ).toHaveAttribute("src", "/foody_green.svg");
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
+    "href",
+    "/foody_small.svg",
+  );
   await expect(page).toHaveTitle("Wochenplan · Foody");
   await page.getByRole("button", { name: "Gerichte", exact: true }).click();
   await expect(page).toHaveTitle("Gerichte · Foody");
@@ -47,6 +53,12 @@ test("Foody branding reaches navigation titles and the installable manifest with
   const manifest = await response.json();
   expect(manifest.name).toBe("Foody – Gemeinsam gut essen");
   expect(manifest.short_name).toBe("Foody");
+  expect(manifest.icons).toContainEqual({
+    src: "/foody_small.svg",
+    sizes: "any",
+    type: "image/svg+xml",
+    purpose: "any",
+  });
   expect(manifest.start_url).toBe("/");
   expect(manifest.scope).toBe("/");
   expect(manifest.id ?? manifest.start_url).toBe("/");

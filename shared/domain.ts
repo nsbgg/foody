@@ -1,9 +1,18 @@
 import { z } from "zod";
+import {
+  isStoredRecipeImage,
+  MAX_RECIPE_IMAGE_LENGTH,
+  MAX_RECIPE_IMAGES,
+} from "./recipe-image.ts";
 export const ingredientSchema = z.object({
   name: z.string().trim().min(1).max(200),
   amount: z.number().nonnegative().max(1e6).nullable(),
   unit: z.string().max(40),
 });
+const recipeImageSchema = z.union([
+  z.string().max(2000),
+  z.string().max(MAX_RECIPE_IMAGE_LENGTH).refine(isStoredRecipeImage),
+]);
 export const recipeSchema = z.object({
   title: z.string().trim().min(1).max(160),
   description: z.string().max(1000),
@@ -11,7 +20,11 @@ export const recipeSchema = z.object({
   minutes: z.number().nonnegative().max(10000),
   ingredients: z.array(ingredientSchema).max(300),
   steps: z.array(z.string().trim().min(1).max(5000)).min(1).max(200),
-  image: z.string().max(2000),
+  image: recipeImageSchema,
+  images: z
+    .array(recipeImageSchema)
+    .max(MAX_RECIPE_IMAGES - 1)
+    .optional(),
   source: z.string().max(2000),
   category: z.string().max(60),
   archived: z.boolean(),

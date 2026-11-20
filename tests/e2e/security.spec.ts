@@ -52,7 +52,7 @@ test("API strips injected metadata and recipe markup renders as text", async ({
   await page.goto("/");
   await expect(
     page.getByText("Alles synchronisiert", { exact: true }),
-  ).toBeVisible();
+  ).toHaveText("Alles synchronisiert");
   await page.getByRole("button", { name: "Gerichte", exact: true }).click();
   await page.getByRole("button", { name: title, exact: true }).click();
   await expect(page.locator("dialog h2")).toHaveText(title);
@@ -76,7 +76,7 @@ test("legacy poisoned check metadata cannot impersonate a recipe in conflict com
   await page.goto("/");
   await expect(
     page.getByText("Alles synchronisiert", { exact: true }),
-  ).toBeVisible();
+  ).toHaveText("Alles synchronisiert");
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.evaluate(async (id) => {

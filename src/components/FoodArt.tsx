@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Recipe } from "../../shared/domain.ts";
+import { isRecipeImageSource } from "../../shared/recipe-image.ts";
 
 export function FoodArt({
   recipe,
@@ -15,7 +16,7 @@ export function FoodArt({
   if (
     recipe.image &&
     recipe.image !== failedImage &&
-    /^https?:\/\//.test(recipe.image)
+    isRecipeImageSource(recipe.image)
   )
     return (
       <img
@@ -32,11 +33,11 @@ export function FoodArt({
       <rect
         width="240"
         height="144"
-        fill={["#e9eee5", "#f0e8da", "#e8ece2"][index % 3]}
+        fill={["var(--panel)", "var(--canvas)", "var(--selected)"][index % 3]}
       />
       <ellipse cx="122" cy="117" rx="65" ry="9" fill="#000" opacity=".05" />
-      <circle cx="120" cy="70" r="57" fill="#fafbf7" />
-      <circle cx="120" cy="70" r="47" fill="#e1e3d7" />
+      <circle cx="120" cy="70" r="57" fill="var(--surface)" />
+      <circle cx="120" cy="70" r="47" fill="var(--line)" />
       <circle
         cx="120"
         cy="70"

@@ -6,11 +6,19 @@ Das Board beantwortet zuerst: Was essen wir diese Woche? Der Stapel beantwortet:
 
 Gewählte Richtung: `editorial-greeting`, Seed `747695860`. Die sieben Tagesbahnen ersetzen das allgemeine Dashboardraster, weil die Woche die natürliche Struktur des Produkts ist. Die Instrument-Sans-Variante verwendet einen Titel in App-Größe. Keine Neuziehung.
 
-Palette: Gartenweiß `#f5f7f4`, Weiß `#ffffff`, Kräutergrün `#256347`, dunkles Blatt `#202c24`, Salbei `#eef2eb`, Sekundärtext `#59655c`. Die Marke erscheint als Kochtopf mit Blatt. Flache Flächen, ruhige Grenzen, wenig Farbe in der Navigation. Die Illustration eines Tellers ist als Illustration erkennbar, keine vorgetäuschte Fotografie.
+Palette: Logogrün `#00b74c`, Weiß `#ffffff`, Gartenweiß `#f4f9f6`, Mint `#e8f6ec`, dunkles Blatt `#142e21` und Textgrün `#006f2f`. Die Wortmarke verwendet `foody_green.svg`, Favicon und App-Icons stammen aus `foody_small.svg`. Das kräftige Logogrün kennzeichnet Hauptaktionen und den heutigen Tag; darauf steht dunkelgrüner Text (`#032311`) für ausreichenden Kontrast. Kleine grüne Texte, Fokusrahmen und Checkboxen verwenden das dunklere Textgrün. Ausgewählte Navigation, Filter und Kochhinweise liegen auf Mintflächen (`#d7f2e0`), Sekundärtext verwendet `#435b4c`. Farben werden als gemeinsame CSS-Variablen für alle Ansichten und Illustrationen gepflegt. Flache Flächen und ruhige Grenzen halten die Wochenplanung übersichtlich. Die Tellerillustration bleibt als Illustration erkennbar.
 
 Desktop: sieben gleich breite Tagesbahnen im Hauptbereich und ein 294px breiter Rezeptstapel mit 24px Abstand. Tablet: Stapel unter dem Board, zwei Rezeptspalten. Handy: Wochenleiste und eine Tagesbahn; Rezeptstapel darunter. Jeder Eintrag hat eine Alternative zum Ziehen über Datumsauswahl.
 
 Daten: ein Haushalt, sechs vollständig ausgefüllte Beispielrezepte für zwei Portionen, vier Beispieleinträge in der ersten Startwoche. Summen und Einkaufsmengen entstehen ausschließlich aus den Einträgen. Diese Beispieldaten können über die Oberfläche archiviert beziehungsweise entfernt werden.
+
+## Heller und dunkler Modus
+
+Lesbarkeit: Begleittexte verwenden mindestens 13 px, Bedienelemente in der Grunddarstellung 14 px, Rezepttitel im Stapel 15 px und Formulareingaben 16 px. Ein ruhiger Zeilenabstand und kräftigere Sekundärtextfarben unterstützen beide Farbmodi. Deaktivierte Schaltflächen bleiben lesbar und sind durch Farbe und Zustand gekennzeichnet; Rezeptkarten werden beim Erscheinen nicht ausgeblendet. In schmalen Tagesbahnen dürfen Aktionen umbrechen, statt Text abzuschneiden. Die große Schrift und gemessene Seiteneinteilung des Kochmodus bleiben erhalten.
+
+Ohne eigene Auswahl folgt die App der Systemeinstellung und reagiert auch auf deren Änderungen. Der Schalter mit Mond-/Sonnensymbol im App-Header und in den Kochwerkzeugen speichert die eigene Auswahl gerätelokal. Beide Schalter steuern dieselbe Einstellung; der Displaystatus bleibt davon unabhängig. Ist der Browserspeicher gesperrt, funktioniert der Wechsel für die laufende Sitzung weiter. Eine frühe Initialisierung vor dem ersten Zeichnen verhindert einen hellen Start bei gewähltem Darkmode.
+
+Im Darkmode verwenden alle Ansichten, Dialoge, Zutaten, Timer und Abschlussillustrationen die gemeinsamen Farbvariablen: Hintergrund `#101a15`, Flächen `#18261f`, Mintflächen `#20362a`/`#244b33`, Text `#e6f2e9`, Sekundärtext `#bcd0c1` und helle grüne Hervorhebungen `#67df92`. Das Logogrün bleibt für Hauptaktionen erhalten. Native Eingabefelder und die Browserleiste folgen dem gewählten Modus; Rezeptfotos behalten ihre natürlichen Farben.
 
 ## Kochmodus im Vollbild
 
@@ -34,9 +42,13 @@ Für die gewünschte ADHS-orientierte Lesbarkeit trennt der Kochscreen Sätze mi
 
 Die Erkennung verwendet vollständige Namen und eine kleine geprüfte Liste gebräuchlicher Varianten, etwa „Rote Linsen“/„Linsen“ und „Blattspinat“/„Spinat“. Sie ist keine freie Sprachinterpretation. Die gemessene Seiteneinteilung gilt auch für die ergänzten Mengenangaben.
 
-Die Timeransicht verwendet dieselbe Kräutergrün-/Salbeipalette und Instrument Sans. Ein ruhiger Uhrenring mit großer Ziffernanzeige bildet den Schwerpunkt. Zeitvorgaben, Start, Pause, Fortsetzen und Zurücksetzen sind direkt bedienbar. „Minimieren“ schließt die Timeransicht und lässt den Countdown als wieder aufklappbare Schaltfläche im Kochmodus-Header sichtbar. Endzeit, ursprüngliche Dauer und pausierte Restzeit werden gerätelokal gespeichert. Es werden keine zusätzlichen Browserberechtigungen angefordert.
+Die Timeransicht verwendet dieselbe Logogrün-/Mintpalette und Instrument Sans. Ein ruhiger Uhrenring mit großer Ziffernanzeige bildet den Schwerpunkt. Zeitvorgaben, Start, Pause, Fortsetzen und Zurücksetzen sind direkt bedienbar. „Minimieren“ schließt die Timeransicht und lässt den Countdown als wieder aufklappbare Schaltfläche im Kochmodus-Header sichtbar. Endzeit, ursprüngliche Dauer und pausierte Restzeit werden gerätelokal gespeichert. Es werden keine zusätzlichen Browserberechtigungen angefordert.
 
 Die reine PWA hat keine browserübergreifend verlässliche Schnittstelle zum Starten und Bestätigen des Standard-Geräte-Timers. Daher verwendet sie den internen Timer. Androids [Timer-Intent](https://developer.android.com/guide/components/intents-common#CreateTimer) gehört zur nativen App-Schnittstelle; [Chrome erlaubt externe Intent-Aufrufe nur für entsprechend freigegebene Activities](https://developer.chrome.com/docs/android/intents). Ein Fensterwechsel beweist keinen gestarteten Timer. Unbestätigte Deep Links und erfundene native Schnittstellen werden nicht verwendet. Der interne Timer meldet seinen Ablauf in der geöffneten App; er ersetzt keinen Hintergrundalarm des Betriebssystems.
+
+## Zutaten bereitstellen
+
+Die Zutatenansicht im Kochmodus ist eine Checkliste mit nativen Checkboxen und großen anklickbaren Zeilen. Mengen folgen den gewählten Portionen. Häkchen werden pro Rezept beziehungsweise Planeintrag zusammen mit dem Kochfortschritt gerätelokal gespeichert; Schließen, Seitenwechsel und Neuladen behalten sie bei. Beim Start über „Noch einmal“ werden die Häkchen zurückgesetzt. Rezeptdaten und Einkaufsliste bleiben unabhängig davon. Die Seiteneinteilung misst die tatsächlichen Checkboxzeilen, damit auch lange Namen ohne Abschneiden erreichbar bleiben. Wird eine lange Zutat auf mehrere Seiten verteilt, steuern alle Fragmente dasselbe Häkchen.
 
 ## Synchronisierung
 

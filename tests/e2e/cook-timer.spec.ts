@@ -65,7 +65,7 @@ async function ready(page: Page) {
   await page.goto("/");
   await expect(
     page.getByText("Alles synchronisiert", { exact: true }),
-  ).toBeVisible();
+  ).toHaveText("Alles synchronisiert");
 }
 
 async function openRecipeCook(page: Page, title: string) {
@@ -258,7 +258,7 @@ for (const viewport of [
     await page.reload();
     await expect(
       page.getByText("Alles synchronisiert", { exact: true }),
-    ).toBeVisible();
+    ).toHaveText("Alles synchronisiert");
     await openRecipeCook(page, data.recipe.title);
     await expect(page.locator(".cook-timer-chip")).toHaveAccessibleName(
       /pausiert/,

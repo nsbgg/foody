@@ -66,7 +66,7 @@ for (const viewport of [
     await page.goto("/");
     await expect(
       page.getByText("Alles synchronisiert", { exact: true }),
-    ).toBeVisible();
+    ).toHaveText("Alles synchronisiert");
     await page.getByRole("button", { name: "Gerichte", exact: true }).click();
     await page.getByRole("button", { name: title, exact: true }).click();
     await page

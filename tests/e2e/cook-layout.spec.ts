@@ -182,7 +182,7 @@ for (const viewport of viewports) {
     await page.goto("/");
     await expect(
       page.getByText("Alles synchronisiert", { exact: true }),
-    ).toBeVisible();
+    ).toHaveText("Alles synchronisiert");
     await page.getByRole("button", { name: "Gerichte", exact: true }).click();
     const normalScrollbar = await page
       .locator("html")
@@ -267,7 +267,7 @@ test("optional cooking panels keep all ingredients and timer controls reachable 
   await page.goto("/");
   await expect(
     page.getByText("Alles synchronisiert", { exact: true }),
-  ).toBeVisible();
+  ).toHaveText("Alles synchronisiert");
   await page.getByRole("button", { name: "Gerichte", exact: true }).click();
   await openCook(page, fixture.title);
   await page

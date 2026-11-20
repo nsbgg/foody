@@ -10,7 +10,7 @@ export default defineConfig({
       filename: "sw.ts",
       registerType: "prompt",
       includeAssets: [
-        "icon.svg",
+        "foody_small.svg",
         "icon-192.png",
         "icon-512.png",
         "icon-maskable.png",
@@ -20,12 +20,18 @@ export default defineConfig({
         short_name: "Foody",
         description: "Wochenplan, Rezeptstapel und Kochmodus",
         lang: "de",
-        theme_color: "#256347",
-        background_color: "#f5f7f4",
+        theme_color: "#00b74c",
+        background_color: "#f4f9f6",
         display: "standalone",
         start_url: "/",
         scope: "/",
         icons: [
+          {
+            src: "/foody_small.svg",
+            sizes: "any",
+            type: "image/svg+xml",
+            purpose: "any",
+          },
           {
             src: "/icon-192.png",
             sizes: "192x192",
