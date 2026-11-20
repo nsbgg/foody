@@ -5,8 +5,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ListChecks,
-  Sun,
-  Moon,
+  MonitorCheck,
+  Monitor,
   X,
   Pause,
 } from "lucide-react";
@@ -386,15 +386,20 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
             : `Schritt ${step + 1} von ${recipe.steps.length}`}
         </span>
         <span
-          role="img"
-          aria-label={wake ? "Display bleibt wach" : "Display-Ruhemodus aktiv"}
-          title={wake ? "Display bleibt wach" : "Display-Ruhemodus aktiv"}
+          className="cook-display-status"
+          role="status"
+          title={
+            wake
+              ? "Foodie hält den Bildschirm während des Kochens wach."
+              : "Foodie kann das automatische Abschalten gerade nicht verhindern."
+          }
         >
           {wake ? (
-            <Sun size={18} aria-hidden="true" />
+            <MonitorCheck size={18} aria-hidden="true" />
           ) : (
-            <Moon size={18} aria-hidden="true" />
+            <Monitor size={18} aria-hidden="true" />
           )}
+          {wake ? "Display bleibt an" : "Display kann ausgehen"}
         </span>
         <progress
           max={recipe.steps.length}

@@ -14,6 +14,8 @@ Daten: ein Haushalt, sechs vollständig ausgefüllte Beispielrezepte für zwei P
 
 ## Kochmodus im Vollbild
 
+Der Displaystatus steht als Bildschirm-Symbol mit sichtbarem Text neben dem Schrittfortschritt: „Display bleibt an“ bei aktivem Wake Lock, sonst „Display kann ausgehen“. Die Anzeige ist ein Status und kein Theme-Schalter. Änderungen werden über eine höfliche Live-Region zugänglich gemacht; Sonne/Mond werden dafür nicht verwendet.
+
 Der Kochmodus füllt den verfügbaren App-Bildschirm als nativer modaler Dialog. Die vorhandene Farbpalette und Schrift bleiben erhalten. Rezeptname und Fortschritt stehen kompakt oben, die aktuelle Anweisung trägt die größte Schrift, Zurück und Weiter bleiben am unteren Rand erreichbar. Erklärtexte und dauerhaft geöffnete Nebenbereiche entfallen.
 
 Lange Anweisungen werden entsprechend der tatsächlich verfügbaren Textfläche auf Seiten verteilt. Zutaten und Timer öffnen eigene Ansichten im Kochmodus. Die Bedienung erfolgt über Tasten statt über Scrollen; kleine Bildschirme, Querformat und vergrößerte Darstellung werden mit Geometrieprüfungen getestet. Vollbild bezeichnet hier den verfügbaren Browser-/PWA-Inhaltsbereich; die Browserleiste wird nicht automatisch ausgeblendet.

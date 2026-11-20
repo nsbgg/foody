@@ -992,7 +992,7 @@ html:has(.dialog.fullscreen:modal),
   font-size: 14px;
   color: var(--muted);
 }
-.cook-progress > span:nth-child(2) {
+.cook-display-status {
   margin-inline-start: auto;
   display: inline-flex;
   align-items: center;
