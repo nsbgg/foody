@@ -34,6 +34,25 @@ IndexedDB speichert die lokale Datenkopie und ausstehende Änderungen. Die Synch
 
 Ein Planeintrag enthält seine eigene Rezeptfassung. Änderungen und Archivieren in der Rezeptbibliothek ändern vorhandene Planeinträge nicht. Über „Ändern → Aktuelle Rezeptfassung übernehmen“ lässt sich ein Eintrag ausdrücklich aktualisieren.
 
+## Chefkoch-Rezepte importieren
+
+Im Rezeptstapel **Rezept aus dem Internet** wählen, einen vollständigen Chefkoch-Rezeptlink
+einfügen und **Rezept übernehmen** anklicken. Foodie öffnet die Angaben zur
+Kontrolle im Editor; erst beim Speichern kommt das Rezept in den Stapel. Quelle,
+verfügbare Zutatenmengen, Portionen und Kochschritte werden übernommen. Fehlende
+Angaben bleiben zur Ergänzung offen. Andere Rezeptseiten mit JSON-LD funktionieren
+weiterhin über denselben Import.
+
+Der Chefkoch-Adapter verwendet die Datenmodelle und Textbereinigung von
+[`chefkoch-api` 1.2.2](https://github.com/gamersi/chefkoch-api). Das upstream als
+veraltet markierte Paket liefert selbst keine Schritte oder Portionenzahlen;
+Foodie ergänzt diese aus strukturierten Seitendaten und passenden HTML-Feldern.
+Der Download läuft ausschließlich über Foodies abgesicherten Importer. Die
+Netzwerk-, Such-, Crawl- und Dateioperationen des Pakets werden nicht verwendet.
+Dies ist keine offizielle Chefkoch-Schnittstelle; Änderungen oder Zugriffssperren
+der Website können den Import beeinträchtigen. Es werden nur einzelne verlinkte
+Rezepte geladen, keine Rezeptsammlungen heruntergeladen.
+
 ## Betrieb und Installation auf Handy/Tablet
 
 Alle Geräte müssen dieselbe Serveradresse öffnen. Für den Zugriff im Heimnetz kann `HOST=0.0.0.0` gesetzt werden. `PORT` (Standard `4307`) und `DATA_DIR` (Standard `data`) sind ebenfalls konfigurierbar. Beispiel in PowerShell:

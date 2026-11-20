@@ -5,7 +5,8 @@ import { z } from "zod";
 import { operationSchema, type Operation } from "../shared/domain.ts";
 import { seedRows } from "../shared/seed.ts";
 import { Store } from "./store.ts";
-import { safeFetch, extractRecipe, ImportError } from "./importer.ts";
+import { ImportError } from "./importer.ts";
+import { importRecipe } from "./recipe-import.ts";
 import { allowedHosts, trustedHost, trustedApiRequest } from "./origin.ts";
 const hosts = allowedHosts(process.env.ALLOWED_HOSTS);
 mkdirSync(process.env.DATA_DIR || "data", { recursive: true });
@@ -72,8 +73,7 @@ app.post("/api/import", async (req, res) => {
   }
   imports++;
   try {
-    const page = await safeFetch(parsed.data.url);
-    res.json({ recipe: extractRecipe(page.html, page.url) });
+    res.json({ recipe: await importRecipe(parsed.data.url) });
   } catch (error) {
     res.status(422).json({
       error:

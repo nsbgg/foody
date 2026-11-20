@@ -161,9 +161,13 @@ export function createRecipeFetcher(
 export const safeFetch = createRecipeFetcher();
 const text = (v: unknown): string =>
   typeof v === "string" ? load(`<div>${v}</div>`)("div").text().trim() : "";
-export function extractRecipe(html: string, source: string): Recipe {
+export function extractRecipe(
+  html: string,
+  source: string,
+  fallback?: Partial<Recipe>,
+): Recipe {
   try {
-    return parseRecipe(html, source);
+    return parseRecipe(html, source, fallback);
   } catch (error) {
     if (error instanceof ImportError) throw error;
     throw new ImportError(
@@ -171,7 +175,11 @@ export function extractRecipe(html: string, source: string): Recipe {
     );
   }
 }
-function parseRecipe(html: string, source: string): Recipe {
+function parseRecipe(
+  html: string,
+  source: string,
+  fallback?: Partial<Recipe>,
+): Recipe {
   const $ = load(html);
   let found: any;
   function walk(v: any) {
@@ -196,10 +204,11 @@ function parseRecipe(html: string, source: string): Recipe {
       walk(JSON.parse($(el).text()));
     } catch {}
   });
-  if (!found)
+  if (!found && !fallback?.title)
     throw new ImportError(
       "Kein strukturiertes Rezept gefunden. Du kannst das Gericht manuell anlegen und die Quelle ergänzen.",
     );
+  found ??= {};
   const steps = (v: any): string[] =>
     Array.isArray(v)
       ? v.flatMap(steps)
@@ -223,30 +232,40 @@ function parseRecipe(html: string, source: string): Recipe {
     const u = new URL(img, source);
     if (img && ["http:", "https:"].includes(u.protocol)) imageUrl = u.href;
   } catch {}
+  const ingredients = [found.recipeIngredient || []]
+    .flat()
+    .map((i: any) =>
+      parseIngredient(
+        typeof i === "string"
+          ? text(i)
+          : `${i.value || ""} ${i.unitText || ""} ${i.name || ""}`,
+      ),
+    )
+    .filter((i: any) => i.name);
+  const instructions = steps(found.recipeInstructions);
   return {
-    title: text(found.name) || "Importiertes Rezept",
-    description: text(found.description).slice(0, 1000),
+    title: text(found.name) || fallback?.title || "Importiertes Rezept",
+    description:
+      text(found.description).slice(0, 1000) || fallback?.description || "",
     servings: Math.max(
       1,
-      Number(String([found.recipeYield].flat()[0] || 2).match(/\d+/)?.[0]) || 2,
+      Number(String([found.recipeYield].flat()[0] || "").match(/\d+/)?.[0]) ||
+        fallback?.servings ||
+        2,
     ),
     minutes:
       duration(found.totalTime) ||
-      duration(found.prepTime) + duration(found.cookTime),
-    ingredients: [found.recipeIngredient || []]
-      .flat()
-      .map((i: any) =>
-        parseIngredient(
-          typeof i === "string"
-            ? text(i)
-            : `${i.value || ""} ${i.unitText || ""} ${i.name || ""}`,
-        ),
-      )
-      .filter((i: any) => i.name),
-    steps: steps(found.recipeInstructions),
-    image: imageUrl,
+      duration(found.prepTime) + duration(found.cookTime) ||
+      fallback?.minutes ||
+      0,
+    ingredients: ingredients.length ? ingredients : fallback?.ingredients || [],
+    steps: instructions.length ? instructions : fallback?.steps || [],
+    image: imageUrl || fallback?.image || "",
     source,
-    category: text([found.recipeCategory].flat()[0]) || "Importiert",
+    category:
+      text([found.recipeCategory].flat()[0]) ||
+      fallback?.category ||
+      "Importiert",
     archived: false,
   };
 }

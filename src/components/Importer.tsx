@@ -35,8 +35,8 @@ export function Importer({ onImported }: { onImported: (r: Recipe) => void }) {
     >
       <h2>Rezept aus dem Internet</h2>
       <p>
-        Füge den Link zur Rezeptseite ein. Prüfe und ergänze die Angaben vor dem
-        Speichern.
+        Füge einen Chefkoch-Link oder den Link zu einer anderen Rezeptseite ein.
+        Prüfe und ergänze die Angaben vor dem Speichern.
       </p>
       <label>
         Rezeptadresse

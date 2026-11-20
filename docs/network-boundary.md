@@ -52,3 +52,12 @@ Unicode cooking steps can synchronize. Larger requests return HTTP 413;
 malformed JSON returns HTTP 400. The sync schema additionally caps a request at
 100 operations. Client synchronization should split larger queues into bounded
 batches rather than retrying an oversized request unchanged.
+
+Chefkoch imports use the same DNS-pinned, time- and size-limited downloader as
+other recipe imports. The `chefkoch-api` package is used only for its recipe and
+ingredient objects and text normalization; its unbounded network/crawling and
+file-writing methods are never invoked. The adapter reads the downloaded page
+locally, and only for exact `chefkoch.de` / `www.chefkoch.de` recipe URLs after
+redirect validation. It never follows recipe category, tag or image links.
+Structured recipe metadata takes priority; the Chefkoch adapter fills missing
+fields from the recipe page. No cookies, accounts or browser automation are used.
