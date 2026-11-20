@@ -1135,6 +1135,188 @@ main {
   color: #852f20;
   font-weight: 600;
 }
+.cook-tools .cook-timer-chip.active {
+  background: #e3eee5;
+  border-color: #9ebbab;
+  color: #1c5038;
+}
+.timer-chip-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.cook-panel-timer[open] {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.timer-panel {
+  min-block-size: 0;
+  min-inline-size: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) repeat(5, auto);
+  gap: 10px;
+}
+.timer-face {
+  inline-size: 200px;
+  block-size: 200px;
+  align-self: center;
+  justify-self: center;
+  position: relative;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+.cook .timer-face > progress.sr-only {
+  inline-size: 1px;
+  block-size: 1px;
+}
+.timer-ring {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  transform: rotate(-90deg);
+  fill: none;
+  stroke-width: 4;
+}
+.timer-ring-track {
+  stroke: #e5ece5;
+}
+.timer-ring-progress {
+  stroke: var(--green);
+  stroke-linecap: round;
+}
+.timer-readout {
+  display: block;
+  font-size: 60px;
+  font-weight: 500;
+  letter-spacing: -0.06em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.timer-face.long .timer-readout {
+  font-size: 40px;
+}
+.timer-state {
+  font-size: 14px;
+  color: var(--muted);
+  margin-block-start: 6px;
+}
+.timer-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.timer-presets button {
+  min-block-size: 44px;
+  min-inline-size: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 14px;
+  padding: 6px;
+}
+.timer-presets button[aria-pressed="true"] {
+  color: #1c5038;
+  background: #e3eee5;
+  border-color: #9ebbab;
+}
+.timer-duration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 14px;
+}
+.timer-duration input {
+  inline-size: 80px;
+  min-block-size: 44px;
+  margin: 0 !important;
+}
+.timer-actions,
+.timer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.dialog .timer-panel button {
+  margin: 0;
+}
+.timer-actions button,
+.timer-bottom button {
+  min-block-size: 44px;
+  min-inline-size: 0;
+  flex: 1 1 0;
+  font-size: 14px;
+  padding-inline: 8px;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+.dialog .timer-panel .timer-hint {
+  margin: 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--muted);
+}
+@media (max-width: 360px) {
+  .timer-actions .secondary {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .timer-actions .secondary svg {
+    inline-size: 16px;
+    block-size: 16px;
+  }
+}
+@media (max-height: 650px) and (min-height: 481px) {
+  .cook-panel-timer {
+    padding: 12px;
+  }
+  .timer-panel {
+    gap: 6px;
+  }
+  .timer-face {
+    inline-size: 120px;
+    block-size: 120px;
+  }
+  .timer-readout {
+    font-size: 36px;
+  }
+  .timer-face.long .timer-readout {
+    font-size: 26px;
+  }
+  .timer-state {
+    font-size: 12px;
+  }
+}
+@media (max-height: 480px) {
+  .cook-panel-timer {
+    inline-size: min(720px, calc(100% - 24px));
+  }
+  .timer-panel {
+    grid-template-columns: minmax(100px, 1fr) minmax(0, 1.4fr);
+    grid-template-rows: repeat(5, auto);
+    gap: 6px 16px;
+    align-content: center;
+  }
+  .timer-face {
+    grid-column: 1;
+    grid-row: 1 / 6;
+    inline-size: min(100%, 180px);
+    block-size: 180px;
+  }
+  .timer-presets,
+  .timer-duration,
+  .timer-actions,
+  .timer-bottom,
+  .timer-hint {
+    grid-column: 2;
+  }
+  .timer-readout {
+    font-size: 48px;
+  }
+  .timer-face.long .timer-readout {
+    font-size: 32px;
+  }
+}
 @media (max-width: 600px) {
   .cook-header {
     flex-wrap: wrap;

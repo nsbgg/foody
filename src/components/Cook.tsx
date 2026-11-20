@@ -8,9 +8,23 @@ import {
   Sun,
   Moon,
   X,
+  Pause,
 } from "lucide-react";
 import { formatAmount, type Recipe, type Entry } from "../../shared/domain.ts";
+import { enrichCookingStep } from "../../shared/cook-instructions.ts";
 import type { RecipeRow, EntryRow } from "../types.ts";
+import { CookTimer, timerReadout, type TimerMode } from "./CookTimer.tsx";
+
+function savedCook(key: string): Record<string, unknown> {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(key) || "{}");
+    return value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
 
 // Measure using the visible paragraph's typography. Retain every character and
 // split long unbroken text on grapheme boundaries instead of shrinking its type.
@@ -135,7 +149,25 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
       return 0;
     }
   });
-  const [minutes, setMinutes] = useState(5);
+  const [minutes, setMinutes] = useState(() => {
+    const saved = savedCook(key).durationSeconds;
+    return typeof saved === "number" &&
+      Number.isInteger(saved) &&
+      saved >= 60 &&
+      saved <= 86400
+      ? saved / 60
+      : 5;
+  });
+  const [durationSeconds, setDurationSeconds] = useState(() => minutes * 60);
+  const [pausedSeconds, setPausedSeconds] = useState<number | null>(() => {
+    const saved = savedCook(key).pausedSeconds;
+    return typeof saved === "number" &&
+      Number.isInteger(saved) &&
+      saved > 0 &&
+      saved <= 86400
+      ? saved
+      : null;
+  });
   const [deadline, setDeadline] = useState<number | null>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(key) || "{}").deadline;
@@ -151,11 +183,18 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
   const [panel, setPanel] = useState<"ingredients" | "timer" | null>(null);
   const panelRef = useRef<HTMLDialogElement>(null);
   const panelHeading = useId();
-  const timerInput = useId();
   const [page, setPage] = useState(0);
   const [ingredientPage, setIngredientPage] = useState(0);
   const done = step >= recipe.steps.length;
-  const stepPages = useMeasuredPages(done ? "" : recipe.steps[step]);
+  const stepPages = useMeasuredPages(
+    done
+      ? ""
+      : enrichCookingStep(
+          recipe.steps[step],
+          recipe.ingredients,
+          servings / recipe.servings,
+        ),
+  );
   const ingredientText =
     recipe.ingredients
       .map((ingredient) =>
@@ -192,9 +231,12 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
   }, [panel]);
   useEffect(() => {
     try {
-      localStorage.setItem(key, JSON.stringify({ step, deadline }));
+      localStorage.setItem(
+        key,
+        JSON.stringify({ step, deadline, pausedSeconds, durationSeconds }),
+      );
     } catch {}
-  }, [step, deadline, key]);
+  }, [step, deadline, pausedSeconds, durationSeconds, key]);
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
@@ -232,11 +274,28 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
   }, []);
   const remaining = deadline
     ? Math.max(0, Math.ceil((deadline - now) / 1000))
-    : 0;
-  const timerLabel =
-    remaining === 0
-      ? "Timer abgelaufen"
-      : `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`;
+    : (pausedSeconds ?? 0);
+  const timerMode: TimerMode =
+    deadline !== null
+      ? remaining === 0
+        ? "finished"
+        : "running"
+      : pausedSeconds !== null
+        ? "paused"
+        : "ready";
+  const timerActive = timerMode !== "ready";
+  const startTimer = () => {
+    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) return;
+    const timestamp = Date.now();
+    setNow(timestamp);
+    setDurationSeconds(minutes * 60);
+    setPausedSeconds(null);
+    setDeadline(timestamp + minutes * 60000);
+  };
+  const resetTimer = () => {
+    setDeadline(null);
+    setPausedSeconds(null);
+  };
   return (
     <div className="cook">
       <header className="cook-header">
@@ -246,14 +305,26 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
             <ListChecks size={18} aria-hidden="true" />
             Zutaten
           </button>
-          <button className="secondary" onClick={() => setPanel("timer")}>
+          <button
+            className={`secondary cook-timer-chip${timerActive ? " active" : ""}`}
+            aria-label={
+              timerActive
+                ? `Timer ${timerMode === "finished" ? "abgelaufen" : timerReadout(remaining) + " verbleibend"}${timerMode === "paused" ? ", pausiert" : ""}`
+                : "Timer"
+            }
+            onClick={() => setPanel("timer")}
+          >
             <Clock3 size={18} aria-hidden="true" />
-            Timer
-            {deadline && (
-              <span className="cook-timer-count" aria-hidden="true">
-                {remaining === 0 ? "Fertig" : timerLabel}
+            Timer{" "}
+            {timerActive && (
+              <span
+                className="cook-timer-count timer-chip-value"
+                aria-hidden="true"
+              >
+                {remaining === 0 ? "Fertig" : timerReadout(remaining)}
               </span>
             )}
+            {timerMode === "paused" && <Pause size={14} aria-hidden="true" />}
           </button>
         </div>
       </header>
@@ -382,50 +453,35 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
               />
             </>
           ) : (
-            <div className="timer">
-              {deadline ? (
-                <>
-                  <span
-                    className="cook-timer-display"
-                    role={remaining === 0 ? "status" : undefined}
-                  >
-                    {timerLabel}
-                  </span>
-                  <button
-                    className="secondary"
-                    onClick={() => setDeadline(null)}
-                  >
-                    Beenden
-                  </button>
-                </>
-              ) : (
-                <>
-                  <label htmlFor={timerInput}>Timer Minuten</label>
-                  <input
-                    id={timerInput}
-                    type="number"
-                    min="1"
-                    max="1440"
-                    value={minutes}
-                    onChange={(event) => setMinutes(event.target.valueAsNumber)}
-                  />
-                  <button
-                    className="primary"
-                    disabled={
-                      !Number.isFinite(minutes) ||
-                      minutes <= 0 ||
-                      minutes > 1440
-                    }
-                    onClick={() => {
-                      setNow(Date.now());
-                      setDeadline(Date.now() + minutes * 60000);
-                    }}
-                  >
-                    Timer starten
-                  </button>
-                </>
-              )}
-            </div>
+            <CookTimer
+              mode={timerMode}
+              remaining={remaining}
+              duration={durationSeconds}
+              minutes={minutes}
+              onMinutes={setMinutes}
+              onStart={startTimer}
+              onPause={() => {
+                const seconds = Math.max(
+                  0,
+                  Math.ceil(((deadline ?? Date.now()) - Date.now()) / 1000),
+                );
+                if (seconds > 0) {
+                  setPausedSeconds(seconds);
+                  setDeadline(null);
+                }
+                setNow(Date.now());
+              }}
+              onResume={() => {
+                if (!pausedSeconds) return;
+                const timestamp = Date.now();
+                setNow(timestamp);
+                setDeadline(timestamp + pausedSeconds * 1000);
+                setPausedSeconds(null);
+              }}
+              onReset={resetTimer}
+              onEnd={resetTimer}
+              onMinimize={() => panelRef.current?.close()}
+            />
           )}
         </dialog>
       )}

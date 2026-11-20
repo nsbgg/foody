@@ -49,5 +49,11 @@ export default defineConfig({
       injectManifest: { globPatterns: ["**/*.{js,css,html,svg,png,woff2}"] },
     }),
   ],
-  server: { proxy: { "/api": "http://127.0.0.1:4307" } },
+  server: {
+    proxy: {
+      // Preserve the browser's authority so the backend's same-origin check
+      // also works for writes forwarded through the development server.
+      "/api": { target: "http://127.0.0.1:4307", changeOrigin: false },
+    },
+  },
 });
