@@ -1213,23 +1213,18 @@ html:has(.dialog.fullscreen:modal),
   color: var(--muted);
   margin-block-start: 6px;
 }
-.timer-presets {
+.timer-recipe-duration {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-}
-.timer-presets button {
-  min-block-size: 44px;
-  min-inline-size: 0;
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
-  padding: 6px;
 }
-.timer-presets button[aria-pressed="true"] {
-  color: #1c5038;
-  background: #e3eee5;
-  border-color: #9ebbab;
+.timer-recipe-duration select {
+  min-block-size: 48px;
+  min-inline-size: 0;
+  margin: 0;
+  font-size: 1rem;
 }
 .timer-duration {
   display: flex;
@@ -1316,7 +1311,7 @@ html:has(.dialog.fullscreen:modal),
     inline-size: min(100%, 180px);
     block-size: 180px;
   }
-  .timer-presets,
+  .timer-recipe-duration,
   .timer-duration,
   .timer-actions,
   .timer-bottom,

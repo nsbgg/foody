@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { formatAmount, type Recipe, type Entry } from "../../shared/domain.ts";
 import { enrichCookingStep } from "../../shared/cook-instructions.ts";
+import { extractStepDurations } from "../../shared/cook-durations.ts";
 import type { RecipeRow, EntryRow } from "../types.ts";
 import { CookTimer, timerReadout, type TimerMode } from "./CookTimer.tsx";
 
@@ -153,7 +154,7 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
     const saved = savedCook(key).durationSeconds;
     return typeof saved === "number" &&
       Number.isInteger(saved) &&
-      saved >= 60 &&
+      saved >= 1 &&
       saved <= 86400
       ? saved / 60
       : 5;
@@ -186,6 +187,7 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
   const [page, setPage] = useState(0);
   const [ingredientPage, setIngredientPage] = useState(0);
   const done = step >= recipe.steps.length;
+  const stepDurations = extractStepDurations(done ? "" : recipe.steps[step]);
   const stepPages = useMeasuredPages(
     done
       ? ""
@@ -285,16 +287,21 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
         : "ready";
   const timerActive = timerMode !== "ready";
   const startTimer = () => {
-    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) return;
+    const seconds = Math.round(minutes * 60);
+    if (!Number.isFinite(minutes) || seconds < 1 || seconds > 86400) return;
     const timestamp = Date.now();
     setNow(timestamp);
-    setDurationSeconds(minutes * 60);
+    setDurationSeconds(seconds);
     setPausedSeconds(null);
-    setDeadline(timestamp + minutes * 60000);
+    setDeadline(timestamp + seconds * 1000);
   };
   const resetTimer = () => {
     setDeadline(null);
     setPausedSeconds(null);
+    if (stepDurations.length) {
+      setMinutes(stepDurations[0].seconds / 60);
+      setDurationSeconds(stepDurations[0].seconds);
+    } else panelRef.current?.close();
   };
   return (
     <div className="cook">
@@ -305,27 +312,35 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
             <ListChecks size={18} aria-hidden="true" />
             Zutaten
           </button>
-          <button
-            className={`secondary cook-timer-chip${timerActive ? " active" : ""}`}
-            aria-label={
-              timerActive
-                ? `Timer ${timerMode === "finished" ? "abgelaufen" : timerReadout(remaining) + " verbleibend"}${timerMode === "paused" ? ", pausiert" : ""}`
-                : "Timer"
-            }
-            onClick={() => setPanel("timer")}
-          >
-            <Clock3 size={18} aria-hidden="true" />
-            Timer{" "}
-            {timerActive && (
-              <span
-                className="cook-timer-count timer-chip-value"
-                aria-hidden="true"
-              >
-                {remaining === 0 ? "Fertig" : timerReadout(remaining)}
-              </span>
-            )}
-            {timerMode === "paused" && <Pause size={14} aria-hidden="true" />}
-          </button>
+          {(stepDurations.length > 0 || timerActive) && (
+            <button
+              className={`secondary cook-timer-chip${timerActive ? " active" : ""}`}
+              aria-label={
+                timerActive
+                  ? `Timer ${timerMode === "finished" ? "abgelaufen" : timerReadout(remaining) + " verbleibend"}${timerMode === "paused" ? ", pausiert" : ""}`
+                  : "Timer"
+              }
+              onClick={() => {
+                if (!timerActive && stepDurations.length) {
+                  setMinutes(stepDurations[0].seconds / 60);
+                  setDurationSeconds(stepDurations[0].seconds);
+                }
+                setPanel("timer");
+              }}
+            >
+              <Clock3 size={18} aria-hidden="true" />
+              Timer{" "}
+              {timerActive && (
+                <span
+                  className="cook-timer-count timer-chip-value"
+                  aria-hidden="true"
+                >
+                  {remaining === 0 ? "Fertig" : timerReadout(remaining)}
+                </span>
+              )}
+              {timerMode === "paused" && <Pause size={14} aria-hidden="true" />}
+            </button>
+          )}
         </div>
       </header>
       <div className="cook-progress">
@@ -458,6 +473,7 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
               remaining={remaining}
               duration={durationSeconds}
               minutes={minutes}
+              choices={stepDurations}
               onMinutes={setMinutes}
               onStart={startTimer}
               onPause={() => {
@@ -479,7 +495,10 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
                 setPausedSeconds(null);
               }}
               onReset={resetTimer}
-              onEnd={resetTimer}
+              onEnd={() => {
+                resetTimer();
+                panelRef.current?.close();
+              }}
               onMinimize={() => panelRef.current?.close()}
             />
           )}

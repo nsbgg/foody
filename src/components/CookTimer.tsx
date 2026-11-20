@@ -1,5 +1,6 @@
 import { Minimize2, Pause, Play, RotateCcw } from "lucide-react";
 import { useId } from "react";
+import type { StepDuration } from "../../shared/cook-durations.ts";
 
 export type TimerMode = "ready" | "running" | "paused" | "finished";
 export function timerReadout(seconds: number) {
@@ -10,6 +11,7 @@ export function CookTimer({
   remaining,
   duration,
   minutes,
+  choices,
   onMinutes,
   onStart,
   onPause,
@@ -22,6 +24,7 @@ export function CookTimer({
   remaining: number;
   duration: number;
   minutes: number;
+  choices: StepDuration[];
   onMinutes: (minutes: number) => void;
   onStart: () => void;
   onPause: () => void;
@@ -32,8 +35,10 @@ export function CookTimer({
 }) {
   const inputId = useId();
   const ready = mode === "ready";
-  const valid = Number.isInteger(minutes) && minutes >= 1 && minutes <= 1440;
-  const seconds = ready ? (valid ? minutes * 60 : 0) : remaining;
+  const inputSeconds = Math.round(minutes * 60);
+  const valid =
+    Number.isFinite(minutes) && inputSeconds >= 1 && inputSeconds <= 86400;
+  const seconds = ready ? (valid ? inputSeconds : 0) : remaining;
   const readout = ready && !valid ? "--:--" : timerReadout(seconds);
   const total = Math.max(1, ready ? seconds : duration);
   const ratio = Math.min(1, Math.max(0, seconds / total));
@@ -72,31 +77,41 @@ export function CookTimer({
       </div>
       {ready && (
         <>
-          <div
-            className="timer-presets"
-            role="group"
-            aria-label="Timerdauer wählen"
-          >
-            {[1, 5, 10, 15].map((preset) => (
-              <button
-                key={preset}
-                className="secondary"
-                aria-pressed={minutes === preset}
-                onClick={() => onMinutes(preset)}
+          {choices.length > 1 && (
+            <label
+              className="timer-recipe-duration"
+              htmlFor={`${inputId}-recipe`}
+            >
+              Zeit im Rezept
+              <select
+                id={`${inputId}-recipe`}
+                value={
+                  choices.some((choice) => choice.seconds === inputSeconds)
+                    ? inputSeconds
+                    : ""
+                }
+                onChange={(event) => onMinutes(Number(event.target.value) / 60)}
               >
-                {preset} Min.
-              </button>
-            ))}
-          </div>
+                <option value="" disabled>
+                  Eigene Zeit
+                </option>
+                {choices.map((choice) => (
+                  <option key={choice.seconds} value={choice.seconds}>
+                    {choice.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <div className="timer-duration">
             <label htmlFor={inputId}>Timer Minuten</label>
             <input
               id={inputId}
               type="number"
-              inputMode="numeric"
-              min="1"
+              inputMode="decimal"
+              min={1 / 60}
               max="1440"
-              step="1"
+              step="any"
               value={Number.isFinite(minutes) ? minutes : ""}
               onChange={(event) => onMinutes(event.target.valueAsNumber)}
             />

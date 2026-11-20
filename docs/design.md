@@ -20,6 +20,8 @@ Lange Anweisungen werden entsprechend der tatsächlich verfügbaren Textfläche 
 
 ## Mengen und Timer beim Kochen
 
+Die Timer-Schaltfläche erscheint nur, wenn der aktuelle Rezeptschritt eine erkennbare Zeitangabe enthält oder noch ein Timer läuft, pausiert beziehungsweise abgelaufen ist. Beim Öffnen wird die erste erkannte Dauer vorausgefüllt; mehrere Dauern eines Schritts stehen in einer kompakten Auswahl. Der Start bleibt ausdrücklich manuell. Sekunden, Minuten und Stunden werden unterstützt; bei Zeitspannen gilt die längere Dauer. Nach dem Beenden verschwindet die Schaltfläche in Schritten ohne Zeitangabe. Laufende Timer werden durch einen Schrittwechsel nicht ersetzt.
+
 Im Kochmodus sind die Scrollbalken des Vollbilddialogs, seiner Zutaten-/Timeransichten und der dahinterliegenden Seite ausgeblendet. Nach dem Schließen gilt wieder die normale Scrollbalkendarstellung der Seite. Die Seiteneinteilung hält die Kochinhalte weiterhin ohne Scrollen erreichbar.
 
 Erkannte Zutatennamen im aktuellen Schritt erhalten die auf die gewählten Portionen skalierte Gesamtmenge, etwa „Linsen (Rezeptmenge: 200 g)“. Die gespeicherte Anleitung bleibt unverändert. Die Kennzeichnung als Rezeptmenge unterscheidet den Gesamtvorrat von Anweisungen wie „die Hälfte“ oder „etwas“. Bereits ausgeschriebene Mengen werden nicht überschrieben oder automatisch skaliert, weil ihre Bedeutung als Teil- oder Gesamtmenge nicht sicher erkennbar ist. Unbekannte Mengen und mehrdeutige Namen bleiben unverändert; die Zutatenansicht enthält weiterhin die vollständige skalierte Liste.

@@ -23,7 +23,7 @@ const viewports = [
   { label: "zoom-reflow", width: 720, height: 450 },
 ];
 
-async function createFixture(request: APIRequestContext) {
+async function createFixture(request: APIRequestContext, timed = false) {
   const { rows } = await (await request.get("/api/state")).json();
   const template = rows.find((row: any) => row.kind === "recipe").data;
   const id = randomUUID();
@@ -47,7 +47,7 @@ async function createFixture(request: APIRequestContext) {
             ingredients,
             servings: 2,
             steps: [
-              longStep,
+              timed ? "Das Gemüse 1 Minute in der Pfanne garen." : longStep,
               "Alles kurz abschmecken und gemeinsam servieren.",
             ],
             image: "",
@@ -263,7 +263,7 @@ test("optional cooking panels keep all ingredients and timer controls reachable 
   request,
 }) => {
   await page.setViewportSize({ width: 320, height: 568 });
-  const fixture = await createFixture(request);
+  const fixture = await createFixture(request, true);
   await page.goto("/");
   await expect(
     page.getByText("Alles synchronisiert", { exact: true }),

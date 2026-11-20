@@ -9,7 +9,11 @@ import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
 import { dateKey } from "../../shared/domain.ts";
 
-async function fixture(request: APIRequestContext, planned = false) {
+async function fixture(
+  request: APIRequestContext,
+  planned = false,
+  timedStep?: string,
+) {
   const id = randomUUID(),
     entryId = randomUUID();
   const recipe = {
@@ -25,7 +29,8 @@ async function fixture(request: APIRequestContext, planned = false) {
       { name: "Salz", amount: null, unit: "" },
     ],
     steps: [
-      "Pasta kochen und Zwiebel schälen. Linsen waschen, Spinat zugeben und mit Salz abschmecken.",
+      timedStep ??
+        "Pasta kochen und Zwiebel schälen. Linsen waschen, Spinat zugeben und mit Salz abschmecken.",
       "100 g Pasta zugeben, dann eine Zwiebel schneiden.",
     ],
     image: "",
@@ -155,6 +160,7 @@ test("planned portions appear beside step ingredients while original recipes and
   );
   await expect(text).not.toContainText("Salz (Rezeptmenge:");
   await expect(page.locator(".cook-panel:modal")).toHaveCount(0);
+  await expect(page.locator(".cook-timer-chip")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Nächster Schritt", exact: true })
     .click();
@@ -179,7 +185,7 @@ for (const viewport of [
       width: viewport.width,
       height: viewport.height,
     });
-    const data = await fixture(request);
+    const data = await fixture(request, false, "Pasta 1 Minute kochen.");
     await ready(page);
     await page.clock.install();
     await openRecipeCook(page, data.recipe.title);
@@ -192,7 +198,6 @@ for (const viewport of [
     );
     await timerFits(page);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    await panel.getByRole("button", { name: "1 Min.", exact: true }).click();
     await expect(
       panel.getByLabel("Timer Minuten", { exact: true }),
     ).toHaveValue("1");
@@ -261,6 +266,9 @@ for (const viewport of [
       .getByRole("button", { name: "Zurücksetzen", exact: true })
       .click();
     await expect(timer).toHaveAttribute("data-state", "ready");
+    await expect(
+      panel.getByLabel("Timer Minuten", { exact: true }),
+    ).toHaveValue("1");
     await panel.getByLabel("Timer Minuten", { exact: true }).fill("1440");
     await timerFits(page);
     await panel
@@ -276,17 +284,67 @@ for (const viewport of [
       .getByRole("button", { name: "Minimieren", exact: true })
       .click();
     await chipFits(page);
+    await page
+      .getByRole("button", { name: "Nächster Schritt", exact: true })
+      .click();
+    await expect(
+      page.getByText("Schritt 2 von 2", { exact: true }),
+    ).toBeVisible();
+    await chipFits(page);
     await page.locator(".cook-timer-chip").click();
     await panel.getByRole("button", { name: "Beenden", exact: true }).click();
-    await expect(timer).toHaveAttribute("data-state", "ready");
-    await panel
-      .getByRole("button", { name: "Minimieren", exact: true })
-      .click();
-    await expect(page.locator(".cook-timer-chip")).not.toHaveClass(/active/);
-    await expect(page.locator(".cook-timer-chip")).toHaveAccessibleName(
-      "Timer",
-    );
+    await expect(panel).toHaveCount(0);
+    await expect(page.locator(".cook-timer-chip")).toHaveCount(0);
     await page.keyboard.press("Escape");
     await expect(page.locator("dialog:modal")).toHaveCount(0);
+  });
+}
+
+for (const viewport of [
+  { name: "tiny", width: 320, height: 568 },
+  { name: "landscape", width: 844, height: 390 },
+]) {
+  test(`recipe durations include seconds and offer multiple times on ${viewport.name} screens`, async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize(viewport);
+    const data = await fixture(
+      request,
+      false,
+      "Pasta 30 Sekunden rühren und danach 2 Minuten kochen.",
+    );
+    await ready(page);
+    await page.clock.install();
+    await openRecipeCook(page, data.recipe.title);
+    await page.locator(".cook-timer-chip").click();
+    const panel = page.locator(".cook-panel-timer:modal");
+    const minutes = panel.getByLabel("Timer Minuten", { exact: true });
+    const choices = panel.getByRole("combobox", {
+      name: "Zeit im Rezept",
+      exact: true,
+    });
+    await expect(minutes).toHaveValue("0.5");
+    await timerFits(page);
+    await inViewport(choices);
+    await inViewport(minutes);
+    await expect(choices.locator("option:enabled")).toHaveCount(2);
+    await choices.selectOption("120");
+    await expect(minutes).toHaveValue("2");
+    await choices.selectOption("30");
+    await panel
+      .getByRole("button", { name: "Timer starten", exact: true })
+      .click();
+    await expect(panel.locator(".timer-readout")).toHaveText("0:30");
+    await page.clock.fastForward(31_000);
+    await expect(panel.locator(".timer-panel")).toHaveAttribute(
+      "data-state",
+      "finished",
+    );
+    await panel
+      .getByRole("button", { name: "Zurücksetzen", exact: true })
+      .click();
+    await expect(minutes).toHaveValue("0.5");
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 }
