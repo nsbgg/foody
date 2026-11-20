@@ -11,7 +11,9 @@ import {
   Pause,
 } from "lucide-react";
 import { formatAmount, type Recipe, type Entry } from "../../shared/domain.ts";
-import { enrichCookingStep } from "../../shared/cook-instructions.ts";
+import { useMemo } from "react";
+import { cookingStepSegments } from "../../shared/cook-instructions.ts";
+import { CookText, measureCookText } from "./cook-text.tsx";
 import { extractStepDurations } from "../../shared/cook-durations.ts";
 import type { RecipeRow, EntryRow } from "../types.ts";
 import { CookTimer, timerReadout, type TimerMode } from "./CookTimer.tsx";
@@ -29,7 +31,11 @@ function savedCook(key: string): Record<string, unknown> {
 
 // Measure using the visible paragraph's typography. Retain every character and
 // split long unbroken text on grapheme boundaries instead of shrinking its type.
-function useMeasuredPages(text: string, active = true) {
+function useMeasuredPages(
+  text: string,
+  active = true,
+  parts?: ReturnType<typeof cookingStepSegments>,
+) {
   const viewport = useRef<HTMLDivElement>(null);
   const measure = useRef<HTMLParagraphElement>(null);
   const [pages, setPages] = useState<string[]>([]);
@@ -43,6 +49,9 @@ function useMeasuredPages(text: string, active = true) {
       segmenter.segment(text),
       (part) => part.segment,
     );
+    const offsets = [0];
+    for (const character of characters)
+      offsets.push(offsets[offsets.length - 1] + character.length);
     const paginate = () => {
       if (cancelled || host.clientHeight <= 0 || host.clientWidth <= 0) return;
       const limit = host.clientHeight - 2;
@@ -54,7 +63,15 @@ function useMeasuredPages(text: string, active = true) {
         let fits = 1;
         while (low <= high) {
           const count = Math.floor((low + high) / 2);
-          probe.textContent = characters.slice(start, start + count).join("");
+          if (parts)
+            measureCookText(
+              probe,
+              parts,
+              offsets[start],
+              offsets[start + count],
+            );
+          else
+            probe.textContent = characters.slice(start, start + count).join("");
           if (probe.getBoundingClientRect().height <= limit) {
             fits = count;
             low = count + 1;
@@ -67,6 +84,20 @@ function useMeasuredPages(text: string, active = true) {
               fits = index + 1;
               break;
             }
+          }
+        }
+        if (parts) {
+          // Sentence boundaries can change as text is shortened. Verify the
+          // actual final fragment rather than trusting an earlier trial.
+          measureCookText(probe, parts, offsets[start], offsets[start + fits]);
+          while (fits > 1 && probe.getBoundingClientRect().height > limit) {
+            fits--;
+            measureCookText(
+              probe,
+              parts,
+              offsets[start],
+              offsets[start + fits],
+            );
           }
         }
         next.push(characters.slice(start, start + fits).join(""));
@@ -90,7 +121,7 @@ function useMeasuredPages(text: string, active = true) {
       observer.disconnect();
       document.fonts.removeEventListener("loadingdone", paginate);
     };
-  }, [text, active]);
+  }, [text, active, parts]);
   return { viewport, measure, pages };
 }
 
@@ -188,15 +219,17 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
   const [ingredientPage, setIngredientPage] = useState(0);
   const done = step >= recipe.steps.length;
   const stepDurations = extractStepDurations(done ? "" : recipe.steps[step]);
-  const stepPages = useMeasuredPages(
-    done
-      ? ""
-      : enrichCookingStep(
-          recipe.steps[step],
-          recipe.ingredients,
-          servings / recipe.servings,
-        ),
+  const stepParts = useMemo(
+    () =>
+      cookingStepSegments(
+        done ? "" : recipe.steps[step],
+        recipe.ingredients,
+        servings / recipe.servings,
+      ),
+    [done, step, recipe.steps, recipe.ingredients, recipe.servings, servings],
   );
+  const stepText = stepParts.map((part) => part.text).join("");
+  const stepPages = useMeasuredPages(stepText, true, stepParts);
   const ingredientText =
     recipe.ingredients
       .map((ingredient) =>
@@ -218,6 +251,9 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
     panel === "ingredients",
   );
   const currentPage = Math.min(page, Math.max(0, stepPages.pages.length - 1));
+  const currentTextStart = stepPages.pages
+    .slice(0, currentPage)
+    .reduce((sum, text) => sum + text.length, 0);
   const currentIngredientPage = Math.min(
     ingredientPage,
     Math.max(0, ingredientPages.pages.length - 1),
@@ -376,7 +412,13 @@ export function Cook({ row }: { row: RecipeRow | EntryRow }) {
         ) : (
           <div className="cook-step" ref={stepPages.viewport}>
             <p className="cook-step-text" aria-live="polite" aria-atomic="true">
-              {stepPages.pages[currentPage] || ""}
+              <CookText
+                parts={stepParts}
+                start={currentTextStart}
+                end={
+                  currentTextStart + (stepPages.pages[currentPage]?.length || 0)
+                }
+              />
             </p>
             <p
               className="cook-measure"

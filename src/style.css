@@ -1050,6 +1050,21 @@ html:has(.dialog.fullscreen:modal),
   font-size: 14px;
   color: var(--muted);
 }
+.cook-sentence {
+  display: block;
+}
+.cook-sentence + .cook-sentence {
+  margin-block-start: 0.55em;
+}
+.cook-ingredient {
+  color: #1c5038;
+  background: #e3eee5;
+  font-weight: 600;
+  padding-inline: 0.06em;
+  border-radius: 0.12em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
 .cook-page-controls.single-page {
   visibility: hidden;
 }

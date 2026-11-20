@@ -31,7 +31,7 @@ async function fixture(
     steps: [
       timedStep ??
         "Pasta kochen und Zwiebel schälen. Linsen waschen, Spinat zugeben und mit Salz abschmecken.",
-      "100 g Pasta zugeben, dann eine Zwiebel schneiden.",
+      "100 g Pasta zugeben, dann eine Zwiebel schneiden. Die Hälfte der Linsen und etwas Salz verwenden.",
     ],
     image: "",
     source: "",
@@ -156,15 +156,31 @@ test("planned portions appear beside step ingredients while original recipes and
     .click();
   const text = page.locator(".cook-step-text");
   await expect(text).toHaveText(
-    "Pasta (Rezeptmenge: 500 g) kochen und Zwiebel (Rezeptmenge: 2 Stück) schälen. Linsen (Rezeptmenge: 400 g) waschen, Spinat (Rezeptmenge: 200 g) zugeben und mit Salz abschmecken.",
+    "500g Pasta kochen und 2 Zwiebel schälen. 400g Linsen waschen, 200g Spinat zugeben und mit Salz abschmecken.",
   );
   await expect(text).not.toContainText("Salz (Rezeptmenge:");
+  for (const ingredient of [
+    "500g Pasta",
+    "2 Zwiebel",
+    "400g Linsen",
+    "200g Spinat",
+    "Salz",
+  ])
+    await expect(
+      text.locator("mark.cook-ingredient").filter({ hasText: ingredient }),
+    ).toHaveCount(1);
   await expect(page.locator(".cook-panel:modal")).toHaveCount(0);
   await expect(page.locator(".cook-timer-chip")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Nächster Schritt", exact: true })
     .click();
   await expect(text).toHaveText(data.recipe.steps[1]);
+  await expect(text.locator("mark.cook-ingredient")).toHaveText([
+    "Pasta",
+    "Zwiebel",
+    "Linsen",
+    "Salz",
+  ]);
   const { rows } = await (await request.get("/api/state")).json();
   expect(rows.find((row: any) => row.id === data.id).data).toEqual(data.recipe);
   expect(rows.find((row: any) => row.id === data.entryId).data.recipe).toEqual(
