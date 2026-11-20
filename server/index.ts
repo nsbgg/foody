@@ -8,6 +8,8 @@ import { Store } from "./store.ts";
 import { ImportError } from "./importer.ts";
 import { importRecipe } from "./recipe-import.ts";
 import { allowedHosts, trustedHost, trustedApiRequest } from "./origin.ts";
+import { AccountService } from "./accounts.ts";
+import { HouseholdService, HouseholdError } from "./households.ts";
 const hosts = allowedHosts(process.env.ALLOWED_HOSTS);
 mkdirSync(process.env.DATA_DIR || "data", { recursive: true });
 const store = new Store(
@@ -15,6 +17,15 @@ const store = new Store(
   seedRows(),
 );
 const app = express();
+const accounts = new AccountService(
+  resolve(process.env.DATA_DIR || "data", "accounts.sqlite"),
+  {
+    origin: process.env.APP_ORIGIN,
+    rpID: process.env.WEBAUTHN_RP_ID,
+  },
+);
+const households = new HouseholdService(accounts.db);
+accounts.setHouseholdGetter((userId) => households.list(userId));
 app.disable("x-powered-by");
 app.use((req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -42,7 +53,141 @@ app.use((req, res, next) => {
 });
 app.use(express.json({ limit: "8mb" }));
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
-app.get("/api/state", (_req, res) => res.json({ rows: store.rows() }));
+accounts.install(app);
+const apiLimit = new Map<string, { count: number; until: number }>();
+app.use("/api", (req, res, next) => {
+  const session = accounts.requireUser(req, res);
+  if (!session) return;
+  if (
+    !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
+    !accounts.csrf(req, res)
+  )
+    return;
+  const now = Date.now();
+  for (const [key, bucket] of apiLimit)
+    if (bucket.until <= now) apiLimit.delete(key);
+  const bucket = apiLimit.get(session.userId!) || {
+    count: 0,
+    until: now + 60_000,
+  };
+  apiLimit.set(session.userId!, bucket);
+  if (++bucket.count > 240) {
+    res.setHeader("Retry-After", Math.ceil((bucket.until - now) / 1000));
+    res.status(429).json({
+      error: "Zu viele Anfragen. Bitte kurz warten.",
+      code: "rate_limit",
+    });
+    return;
+  }
+  next();
+});
+app.get("/api/households", (req, res) => {
+  const session = accounts.requireUser(req, res)!;
+  res.json({ households: households.list(session.userId!) });
+});
+app.post("/api/households", (req, res) => {
+  const session = accounts.requireUser(req, res)!;
+  const parsed = z
+    .object({ name: z.string().trim().min(1).max(80) })
+    .safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({
+      error: "Bitte einen Haushaltsnamen mit höchstens 80 Zeichen eingeben.",
+      code: "validation_error",
+    });
+    return;
+  }
+  const household = households.create(session.userId!, parsed.data.name);
+  accounts.setActiveHousehold(session, household.id);
+  res
+    .location(`/api/households/${household.id}`)
+    .status(201)
+    .json({ household });
+});
+app.post("/api/households/:id/selection", (req, res) => {
+  const session = accounts.requireUser(req, res)!;
+  households.requireMember(session.userId!, req.params.id);
+  accounts.setActiveHousehold(session, req.params.id);
+  res.json(accounts.sessionView(session));
+});
+app.get("/api/households/:id/members", (req, res) => {
+  const session = accounts.requireUser(req, res)!;
+  res.json({ members: households.members(session.userId!, req.params.id) });
+});
+app.post("/api/households/:id/invitations", (req, res) => {
+  const session = accounts.requireUser(req, res)!;
+  households.requireMember(session.userId!, req.params.id, true);
+  const parsed = z
+    .object({
+      email: z
+        .email()
+        .max(254)
+        .transform((v) => v.toLowerCase()),
+    })
+    .safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({
+      error: "Bitte eine gültige E-Mail-Adresse eingeben.",
+      code: "validation_error",
+    });
+    return;
+  }
+  const result = households.invite(
+    session.userId!,
+    req.params.id,
+    parsed.data.email,
+  );
+  res
+    .location(
+      `/api/households/${req.params.id}/invitations/${result.invitation.id}`,
+    )
+    .status(201)
+    .json(result);
+});
+app.delete("/api/households/:id/invitations/:invitationId", (req, res) => {
+  const session = accounts.requireUser(req, res)!;
+  households.revoke(session.userId!, req.params.id, req.params.invitationId);
+  res.status(204).end();
+});
+app.post("/api/household-memberships", (req, res) => {
+  const session = accounts.requireUser(req, res)!;
+  const parsed = z
+    .object({ token: z.string().regex(/^[A-Za-z0-9_-]{43}$/) })
+    .safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({
+      error: "Bitte einen gültigen Einladungscode eingeben.",
+      code: "invalid_invitation",
+    });
+    return;
+  }
+  const household = households.join(session.userId!, parsed.data.token);
+  accounts.setActiveHousehold(session, household.id);
+  res.status(201).json({ household });
+});
+app.delete("/api/households/:id/members/:userId", (req, res) => {
+  const session = accounts.requireUser(req, res)!;
+  households.removeMember(session.userId!, req.params.id, req.params.userId);
+  res.status(204).end();
+});
+// Explicit scope prevents one tab's selection from redirecting another tab's outbox.
+app.use(["/api/state", "/api/sync", "/api/import"], (req, res, next) => {
+  const session = accounts.requireUser(req, res)!;
+  const scope = req.get("X-Household-Id");
+  if (!scope || scope.length > 100) {
+    res.status(409).json({
+      error: "Bitte zuerst einen Haushalt auswählen.",
+      code: "selection_required",
+    });
+    return;
+  }
+  households.requireMember(session.userId!, scope);
+  res.locals.householdId = scope;
+  next();
+});
+app.get("/api/state", (_req, res) =>
+  res.json({ rows: store.rows(res.locals.householdId) }),
+);
 app.post("/api/sync", (req, res) => {
   const parsed = z
     .object({ operations: z.array(operationSchema).max(100) })
@@ -52,9 +197,9 @@ app.post("/api/sync", (req, res) => {
     return;
   }
   const results = parsed.data.operations.map((op) =>
-    store.apply(op as Operation),
+    store.apply(op as Operation, res.locals.householdId),
   );
-  res.json({ results, rows: store.rows() });
+  res.json({ results, rows: store.rows(res.locals.householdId) });
 });
 let imports = 0;
 app.post("/api/import", async (req, res) => {
@@ -100,6 +245,10 @@ app.use(
     res: express.Response,
     _next: express.NextFunction,
   ) => {
+    if (error instanceof HouseholdError) {
+      res.status(error.status).json({ error: error.message, code: error.code });
+      return;
+    }
     const status =
       error &&
       typeof error === "object" &&

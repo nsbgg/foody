@@ -1,5 +1,52 @@
 # Security review
 
+## Account and household update — 2026-11-20
+
+The account implementation replaces the unauthenticated network boundary
+described in the historical review below. The existing Express stack is retained;
+applicable Django security principles were applied to cookie sessions, CSRF,
+parameterized database access, input limits and explicit authorization. Separate
+security, API and frontend reviews covered the implementation.
+
+Household membership is checked for each explicit data scope. User and household
+namespaces also separate offline outboxes and cooking progress. Session rotation,
+salted scrypt passwords, persistent authentication limits and WebAuthn passkeys
+are implemented. WebAuthn requires user verification and verifies RP/origin,
+single-use challenges and user handles. Regression tests use a real browser
+virtual authenticator and test replay and user-handle tampering.
+
+Review found and corrected stale household selections after membership removal,
+client handling of inaccessible scopes and refresh races following authentication
+mutations. Local offline access has a live expiry timer. Rejected access hides
+private data without deleting recoverable offline drafts. Logout clears account
+data on the device and informs other open tabs. Email verification, password
+recovery, encrypted browser storage and an external penetration test remain
+outside this implementation. Deployment and API details are in
+[accounts-api.md](./accounts-api.md).
+
+## Follow-up of account findings — 2026-11-20
+
+Two P2 findings were reproduced in isolated in-memory HTTP fixtures and fixed:
+
+- Rejected protected API calls allocated anonymous sessions even after the
+  bootstrap limit was exhausted. Authorization and CSRF now perform lookup only;
+  missing, forged or expired cookies cannot allocate sessions through those paths.
+- The shared passkey-management limit blocked logout after 120 reads. Logout now
+  precedes the authentication limiter and still requires an existing authenticated
+  session plus valid CSRF. Repeated anonymous logout calls cannot allocate sessions.
+
+Both new regression tests failed before the fixes and pass afterward. The second
+review traced session creation and middleware order and checked that CSRF, old
+cookie revocation, passkey verification and household authorization remain intact.
+The complete 90-test unit suite passes; dependency audit reports no known
+vulnerabilities. All six account browser regressions also pass, including real
+WebAuthn, cross-tab logout and household isolation. No further
+confirmed findings were identified in the reviewed authentication and authorization
+paths. This is a source review with controlled tests, not an external penetration
+test.
+
+## Historical review — 2026-11-19
+
 Review date: 2026-11-19. Scope: the local household application's source and Git history, API input boundaries, SQLite queries, recipe import, client rendering, service worker and dependency inventory. Review uses the `security-review` skill with independent implementation review and a separate release gate. It is not an external penetration test or a guarantee of absence of vulnerabilities.
 
 ## Threat model

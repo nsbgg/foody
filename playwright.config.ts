@@ -1,4 +1,5 @@
 import { defineConfig } from "@playwright/test";
+import { randomUUID } from "node:crypto";
 // Use the locally installed Edge by default. CI installs Playwright Chromium.
 const browser = process.env.PLAYWRIGHT_BROWSER || "msedge";
 if (!["msedge", "chromium"].includes(browser)) {
@@ -19,7 +20,7 @@ export default defineConfig({
   webServer: {
     command: "node server/index.ts",
     url: "http://localhost:3002/api/health",
-    env: { PORT: "3002", DATA_DIR: "test-results/server-data" },
+    env: { PORT: "3002", DATA_DIR: `test-results/server-data-${randomUUID()}` },
     reuseExistingServer: false,
   },
   reporter: "list",

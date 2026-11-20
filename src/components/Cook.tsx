@@ -19,6 +19,7 @@ import { ThemeToggle } from "./ThemeToggle.tsx";
 import { extractStepDurations } from "../../shared/cook-durations.ts";
 import type { RecipeRow, EntryRow } from "../types.ts";
 import { CookTimer, timerReadout, type TimerMode } from "./CookTimer.tsx";
+import { privateStoragePrefix } from "../store.ts";
 
 function savedCook(key: string): Record<string, unknown> {
   try {
@@ -201,7 +202,7 @@ export function Cook({
   const entry = row.kind === "entry" ? (row.data as Entry) : null;
   const recipe = entry?.recipe || (row.data as Recipe);
   const servings = entry?.servings || recipe.servings;
-  const key = `foodie-cook:${row.id}`;
+  const key = `${privateStoragePrefix()}cook:${row.id}`;
   const ingredientKeys = useMemo(
     () =>
       recipe.ingredients.map(
@@ -452,7 +453,7 @@ export function Cook({
               }}
             >
               <Clock3 size={18} aria-hidden="true" />
-              Timer{" "}
+              <span className="timer-chip-label">Timer</span>
               {timerActive && (
                 <span
                   className="cook-timer-count timer-chip-value"

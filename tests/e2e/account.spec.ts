@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.ts";
 import AxeBuilder from "@axe-core/playwright";
 
 test("sync status is only shown in the account popover", async ({ page }) => {

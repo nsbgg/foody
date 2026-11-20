@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.ts";
 
 const url = "https://www.chefkoch.de/rezepte/448991137121794/Waffeln.html";
 const invalidResponseMessage =

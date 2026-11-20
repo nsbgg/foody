@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.ts";
 
 test("household app refuses embedding in a frame", async ({ page }) => {
   const messages: string[] = [];

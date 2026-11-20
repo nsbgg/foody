@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page } from "./fixtures.ts";
 import { randomUUID } from "node:crypto";
 async function ready(page: Page) {
   await page.goto("/");

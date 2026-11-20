@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.ts";
 
 test("recipe dialog closes outside and with Escape while inside clicks stay open", async ({
   page,

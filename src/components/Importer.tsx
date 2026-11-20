@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import type { Recipe } from "../../shared/domain.ts";
+import { useAccount } from "../account.ts";
 
 const invalidResponseMessage =
   "Der Importdienst hat keine gültige Antwort gesendet. Bitte versuche es erneut.";
 
 export function Importer({ onImported }: { onImported: (r: Recipe) => void }) {
+  const account = useAccount();
   const [url, setUrl] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -18,7 +20,11 @@ export function Importer({ onImported }: { onImported: (r: Recipe) => void }) {
         try {
           const r = await fetch("/api/import", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": account.csrfToken,
+              "X-Household-Id": account.activeHouseholdId || "",
+            },
             body: JSON.stringify({ url }),
             signal: AbortSignal.timeout(60000),
           });

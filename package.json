@@ -17,6 +17,8 @@
   },
   "dependencies": {
     "@fontsource/instrument-sans": "^5.3.0",
+    "@simplewebauthn/browser": "^14.0.0",
+    "@simplewebauthn/server": "^14.1.0",
     "cheerio": "^1.2.0",
     "chefkoch-api": "1.2.2",
     "express": "^5.3.0",

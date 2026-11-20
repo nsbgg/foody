@@ -1,4 +1,4 @@
-import { test, expect, type Locator } from "@playwright/test";
+import { test, expect, type Locator } from "./fixtures.ts";
 import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
 

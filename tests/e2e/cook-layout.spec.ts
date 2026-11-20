@@ -4,7 +4,7 @@ import {
   type APIRequestContext,
   type Locator,
   type Page,
-} from "@playwright/test";
+} from "./fixtures.ts";
 import { randomUUID } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 
@@ -261,6 +261,7 @@ for (const viewport of viewports) {
 test("optional cooking panels keep all ingredients and timer controls reachable on a tiny screen", async ({
   page,
   request,
+  account,
 }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   const fixture = await createFixture(request, true);
@@ -324,7 +325,7 @@ test("optional cooking panels keep all ingredients and timer controls reachable 
     .poll(() =>
       page.evaluate(
         (key) => JSON.parse(localStorage.getItem(key) || "{}").deadline,
-        `foodie-cook:${fixture.id}`,
+        `foody-private:${encodeURIComponent(account.userId)}:${encodeURIComponent(account.householdId)}:cook:${fixture.id}`,
       ),
     )
     .toBeGreaterThan(Date.now());

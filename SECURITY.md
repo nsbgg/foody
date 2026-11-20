@@ -3,11 +3,20 @@
 The [security review](./docs/security-review.md) records the threat model,
 confirmed findings, fixes, regression coverage and remaining limitations.
 
-Foody currently has no user accounts or authorization. Anyone able to reach
-the server can read and change household data. The default listener is local;
-use a trusted private network or an authenticated HTTPS reverse proxy when
-sharing it with other devices. Do not expose an unauthenticated instance to
-the public internet.
+Foody authenticates accounts using passwords or WebAuthn passkeys. Household
+membership is checked on every data request, and mutations require CSRF tokens.
+Sessions use opaque HttpOnly SameSite cookies; passwords use salted scrypt.
+Passkeys require user verification, purpose/session-bound single-use challenges,
+and matching RP ID and origin. Deployment requires HTTPS and explicit origin,
+RP ID and hostname configuration; see [account deployment](./docs/accounts-api.md).
+Email verification and password recovery are not implemented. Invitations are
+shared directly by household owners; Foody does not send email.
+
+Browser recipe caches and offline changes are private to each account and
+household. They are not encrypted at rest; device/browser access is a separate
+trust boundary. Offline access expires after at most twelve hours since online
+verification and never outlives the server session. Signing out removes local
+private account data. Legacy data is retained without a public claim endpoint.
 
 Recipe import accepts public HTTP/HTTPS pages with structured recipe data. It
 validates destinations and redirects to reduce server-side request forgery.

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.ts";
 import { randomUUID } from "node:crypto";
 
 test("API strips injected metadata and recipe markup renders as text", async ({
@@ -72,6 +72,7 @@ test("API strips injected metadata and recipe markup renders as text", async ({
 
 test("legacy poisoned check metadata cannot impersonate a recipe in conflict comparison", async ({
   page,
+  account,
 }) => {
   await page.goto("/");
   await expect(
@@ -79,47 +80,53 @@ test("legacy poisoned check metadata cannot impersonate a recipe in conflict com
   ).toHaveText("Alles synchronisiert");
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.evaluate(async (id) => {
-    const database = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open("keyval-store");
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-    await new Promise<void>((resolve, reject) => {
-      const transaction = database.transaction("keyval", "readwrite");
-      const store = transaction.objectStore("keyval");
-      const request = store.get("foodie-state-v1");
-      request.onsuccess = () => {
-        const state = request.result;
-        const local = {
-          opId: crypto.randomUUID(),
-          id,
-          kind: "check",
-          baseRev: 1,
-          data: {
-            checked: false,
-            title: { synthetic: true },
-            recipe: { synthetic: true },
-          },
+  await page.evaluate(
+    async ({ id, key }) => {
+      const database = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open("keyval-store");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      await new Promise<void>((resolve, reject) => {
+        const transaction = database.transaction("keyval", "readwrite");
+        const store = transaction.objectStore("keyval");
+        const request = store.get(key);
+        request.onsuccess = () => {
+          const state = request.result;
+          const local = {
+            opId: crypto.randomUUID(),
+            id,
+            kind: "check",
+            baseRev: 1,
+            data: {
+              checked: false,
+              title: { synthetic: true },
+              recipe: { synthetic: true },
+            },
+          };
+          const remote = {
+            id,
+            kind: "check",
+            rev: 2,
+            data: { checked: true, title: "Poisoned metadata" },
+          };
+          state.pending.push(local);
+          state.rows.push(remote);
+          state.conflicts.push({ local, remote });
+          state.generation++;
+          store.put(state, key);
         };
-        const remote = {
-          id,
-          kind: "check",
-          rev: 2,
-          data: { checked: true, title: "Poisoned metadata" },
-        };
-        state.pending.push(local);
-        state.rows.push(remote);
-        state.conflicts.push({ local, remote });
-        state.generation++;
-        store.put(state, "foodie-state-v1");
-      };
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-      transaction.onabort = () => reject(transaction.error);
-    });
-    database.close();
-  }, randomUUID());
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+        transaction.onabort = () => reject(transaction.error);
+      });
+      database.close();
+    },
+    {
+      id: randomUUID(),
+      key: `foody-state-v3:${encodeURIComponent(account.userId)}:${encodeURIComponent(account.householdId)}`,
+    },
+  );
   await page.reload();
   await page.getByRole("button", { name: "Konflikte (1)" }).click();
   await expect(

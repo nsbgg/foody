@@ -1,9 +1,4 @@
-import {
-  test,
-  expect,
-  type Page,
-  type APIRequestContext,
-} from "@playwright/test";
+import { test, expect, type Page, type APIRequestContext } from "./fixtures.ts";
 import { randomUUID } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import { dateKey, monday } from "../../shared/domain.ts";

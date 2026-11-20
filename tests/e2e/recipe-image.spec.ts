@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.ts";
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { isStoredRecipeImage } from "../../shared/recipe-image.ts";
@@ -68,7 +68,9 @@ test("uploaded picture survives offline reload, syncs and displays on another de
     (row: any) => row.kind === "recipe" && row.data.title === title,
   );
   expect(isStoredRecipeImage(recipe.data.image)).toBe(true);
-  const otherDevice = await browser.newPage();
+  const otherDevice = await browser.newPage({
+    storageState: await context.storageState(),
+  });
   try {
     await otherDevice.goto(new URL("/", page.url()).href);
     await otherDevice

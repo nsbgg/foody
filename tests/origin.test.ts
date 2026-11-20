@@ -32,6 +32,8 @@ test("HTTP server enforces origins and returns accurate JSON body errors", async
       PORT: String(port),
       DATA_DIR: directory,
       ALLOWED_HOSTS: "kitchen.example",
+      APP_ORIGIN: `http://127.0.0.1:${port}`,
+      WEBAUTHN_RP_ID: "127.0.0.1",
     },
     stdio: "ignore",
   });
@@ -70,9 +72,43 @@ test("HTTP server enforces origins and returns accurate JSON body errors", async
   });
   assert.equal(foreignImport.status, 403);
   await foreignImport.arrayBuffer();
+  const bootstrap = await fetch(`${base}/api/session`);
+  let cookie = bootstrap.headers.get("set-cookie")!.split(";")[0];
+  let session = await bootstrap.json();
+  const registration = await fetch(`${base}/api/auth/register`, {
+    method: "POST",
+    headers: {
+      Cookie: cookie,
+      "Content-Type": "application/json",
+      "X-CSRF-Token": session.csrfToken,
+    },
+    body: JSON.stringify({
+      name: "Origin Test",
+      email: "origin@example.com",
+      password: "a secure test password 123!",
+    }),
+  });
+  assert.equal(registration.status, 201);
+  cookie = registration.headers.get("set-cookie")!.split(";")[0];
+  session = await registration.json();
+  const household = await fetch(`${base}/api/households`, {
+    method: "POST",
+    headers: {
+      Cookie: cookie,
+      "Content-Type": "application/json",
+      "X-CSRF-Token": session.csrfToken,
+    },
+    body: JSON.stringify({ name: "Home" }),
+  });
+  const householdId = (await household.json()).household.id;
+  const authHeaders = {
+    Cookie: cookie,
+    "X-CSRF-Token": session.csrfToken,
+    "X-Household-Id": householdId,
+  };
   const privateImport = await fetch(`${base}/api/import`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders },
     body: JSON.stringify({ url: "http://127.0.0.1" }),
   });
   assert.equal(privateImport.status, 422);
@@ -101,12 +137,12 @@ test("HTTP server enforces origins and returns accurate JSON body errors", async
       Host: "kitchen.example",
       Origin: "https://kitchen.example",
     }),
-    200,
+    401,
   );
   const post = (body: string) =>
     fetch(`${base}/api/sync`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body,
     });
   assert.equal((await post("{")).status, 400);

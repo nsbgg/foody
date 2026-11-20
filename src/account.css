@@ -1,0 +1,319 @@
+/* The existing kitchen-green surfaces and Instrument Sans remain the product's face.
+   Desktop auth grid: 5 + 1 + 6 columns in a shared 1100px frame; mobile stacks. */
+.auth-header {
+  justify-content: space-between;
+}
+main.auth-main {
+  max-width: 1172px;
+  padding: 56px 36px;
+}
+.auth-layout {
+  display: grid;
+  grid-template-columns: 5fr 1fr 6fr;
+  align-items: start;
+}
+.auth-intro {
+  grid-column: 1;
+  padding-block: 26px;
+}
+.auth-intro h1 {
+  font-size: 32px;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+.auth-intro > p {
+  font-size: 16px;
+  max-width: 34ch;
+  color: var(--muted);
+}
+.auth-kitchen-note {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.auth-kitchen-note > span {
+  font-size: 16px;
+  font-weight: 600;
+}
+.auth-kitchen-note p {
+  margin-top: 8px;
+  color: var(--muted);
+  max-width: 36ch;
+}
+.auth-form-panel {
+  grid-column: 3;
+  padding: 28px;
+  background: var(--surface);
+  border-radius: 16px;
+  min-width: 0;
+}
+.auth-form-panel h2 {
+  font-size: 24px;
+  font-weight: 500;
+  margin-block: 28px 24px;
+  letter-spacing: -0.025em;
+}
+.auth-mode {
+  display: flex;
+  gap: 8px;
+}
+.auth-mode button {
+  flex: 1;
+  min-height: 44px;
+  background: transparent;
+  color: var(--muted);
+}
+.auth-mode button[aria-pressed="true"] {
+  background: var(--panel);
+  color: var(--ink);
+}
+.auth-form-panel fieldset,
+.account-panel fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.auth-form-panel label,
+.account-panel label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  margin-block: 16px;
+}
+.auth-form-panel input,
+.account-panel input,
+.account-panel select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  font-size: 16px;
+}
+.auth-submit,
+.auth-passkey {
+  width: 100%;
+  min-height: 44px;
+}
+.auth-submit {
+  margin-top: 12px;
+}
+.auth-alternative {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-block: 24px 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.auth-alternative::before,
+.auth-alternative::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+.account-hint {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-block: 8px;
+}
+.auth-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 220px;
+  color: var(--muted);
+}
+.account-menu:has(.account-panel) {
+  width: 380px;
+  padding: 24px;
+}
+.account-identity {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+.account-identity .avatar {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+}
+.account-identity > div {
+  min-width: 0;
+}
+.account-identity h2 {
+  font-size: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.account-identity p {
+  font-size: 13px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.account-panel {
+  min-width: 0;
+}
+.account-panel h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.account-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.account-panel details {
+  margin-top: 14px;
+}
+.account-panel summary {
+  cursor: pointer;
+  font-size: 14px;
+  padding-block: 8px;
+}
+.account-panel summary:hover {
+  color: var(--green);
+}
+.account-panel summary:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+.account-rows {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.account-rows li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 10px;
+}
+.account-rows li > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.account-rows strong {
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.account-rows span {
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.account-rows button {
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+}
+.account-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  color: var(--green);
+  font-size: 14px;
+}
+.account-invitation,
+.account-confirm {
+  padding: 16px;
+  margin-top: 16px;
+  border-radius: 8px;
+  background: var(--panel);
+}
+.account-invitation p,
+.account-confirm p {
+  font-size: 13px;
+}
+.account-inline-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.account-logout {
+  margin-top: 20px;
+  min-height: 44px;
+}
+.account-onboarding {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 28px;
+  border-radius: 16px;
+  background: var(--surface);
+}
+.account-onboarding-title {
+  margin-top: 32px;
+}
+.account-onboarding-title h1 {
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  margin-bottom: 12px;
+}
+.account-onboarding-title p {
+  color: var(--muted);
+}
+.account-spinner {
+  animation: account-spin 1s linear infinite;
+}
+@keyframes account-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .account-spinner {
+    animation: none;
+  }
+}
+@media (max-width: 760px) {
+  main.auth-main {
+    padding: 24px 16px;
+  }
+  .auth-layout {
+    display: block;
+    max-width: 480px;
+    margin-inline: auto;
+  }
+  .auth-intro {
+    padding: 8px 4px 24px;
+  }
+  .auth-intro h1 {
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+  .auth-intro h1 br {
+    display: none;
+  }
+  .auth-intro > p {
+    font-size: 14px;
+    max-width: none;
+  }
+  .auth-kitchen-note {
+    display: none;
+  }
+  .auth-form-panel,
+  .account-onboarding {
+    padding: 24px 20px;
+  }
+  .auth-form-panel h2 {
+    margin-block: 24px 20px;
+  }
+  .account-menu:has(.account-panel) {
+    padding: 20px;
+  }
+}

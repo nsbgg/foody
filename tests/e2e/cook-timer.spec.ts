@@ -4,7 +4,7 @@ import {
   type Page,
   type APIRequestContext,
   type Locator,
-} from "@playwright/test";
+} from "./fixtures.ts";
 import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
 import { dateKey } from "../../shared/domain.ts";

@@ -13,22 +13,23 @@ import {
   Users,
   Search,
   CookingPot,
-  Check,
-  RefreshCw,
   Download,
   Link,
   Archive,
   Pencil,
   Play,
   Minus,
-  WifiOff,
 } from "lucide-react";
 import "@fontsource/instrument-sans/400.css";
 import "@fontsource/instrument-sans/500.css";
 import "@fontsource/instrument-sans/600.css";
 import "./style.css";
+import "./account.css";
 import { PwaUpdate } from "./PwaUpdate.tsx";
-import { initStore, useStore, change, resolveConflict } from "./store.ts";
+import { useStore, change, resolveConflict } from "./store.ts";
+import { useAccount } from "./account.ts";
+import { AuthGate, AccountShell } from "./components/AuthGate.tsx";
+import { AccountPanel } from "./components/AccountPanel.tsx";
 import {
   dateKey,
   monday,
@@ -62,6 +63,7 @@ type Modal =
   | { type: "cook"; row: RecipeRow | EntryRow }
   | { type: "conflicts" };
 function App() {
+  const account = useAccount();
   const state = useStore();
   const [view, setView] = useState<"week" | "recipes" | "shopping">("week");
   const [accountOpen, setAccountOpen] = useState(false);
@@ -76,6 +78,13 @@ function App() {
   const [notice, setNotice] = useState("");
   const [showArchive, setShowArchive] = useState(false);
   const [install, setInstall] = useState<any>(null);
+  useEffect(() => {
+    setModal(null);
+    setAccountOpen(false);
+    cancelDrag();
+    const menu = document.getElementById("account-menu");
+    if (menu?.matches(":popover-open")) menu.hidePopover();
+  }, [account.user?.id, account.activeHouseholdId]);
   const weekKey = dateKey(week),
     dates = dayNames.map((_, i) => dateKey(addDays(week, i)));
   const recipes = state.rows.filter((r) => r.kind === "recipe") as RecipeRow[];
@@ -102,7 +111,6 @@ function App() {
   );
   const today = entries.find((e) => e.data.date === dateKey(new Date()));
   useEffect(() => {
-    void initStore();
     const listener = (e: Event) => {
       e.preventDefault();
       setInstall(e);
@@ -340,6 +348,13 @@ function App() {
       </article>
     );
   }
+  if (!account.loaded || !account.user) return <AuthGate />;
+  if (!account.activeHouseholdId)
+    return (
+      <AccountShell>
+        <AccountPanel onboarding />
+      </AccountShell>
+    );
   return (
     <>
       <a href="#main" className="skip-link">
@@ -384,10 +399,13 @@ function App() {
             className="household"
             popoverTarget="account-menu"
             title="Account-Menü"
+            aria-label="Account-Menü"
             aria-controls="account-menu"
             aria-expanded={accountOpen}
           >
-            <span className="avatar">Z</span>
+            <span className="avatar" aria-hidden="true">
+              {account.user.name.slice(0, 1).toLocaleUpperCase("de")}
+            </span>
             <span className="sr-only">Account-Menü</span>
           </button>
           <div
@@ -396,29 +414,17 @@ function App() {
             popover="auto"
             role="region"
             aria-label="Account"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                event.currentTarget.hidePopover();
+              }
+            }}
             onToggle={(event) =>
               setAccountOpen(event.currentTarget.matches(":popover-open"))
             }
           >
-            <p className="account-menu-title">Unser Zuhause</p>
-            <p className="account-menu-label">Synchronisierung</p>
-            <span
-              className="sync-status"
-              role="status"
-              title="Automatischer Datenabgleich"
-            >
-              {state.status === "Alles synchronisiert" ? (
-                <Check size={15} />
-              ) : state.status.startsWith("Offline") ? (
-                <WifiOff size={15} />
-              ) : (
-                <RefreshCw size={15} />
-              )}
-              {state.status}
-            </span>
-            <p className="account-menu-hint">
-              Deine Änderungen werden automatisch im Hintergrund abgeglichen.
-            </p>
+            <AccountPanel syncStatus={state.status} />
           </div>
         </div>
       </header>

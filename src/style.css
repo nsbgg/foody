@@ -1969,6 +1969,17 @@ html:has(.dialog.fullscreen:modal),
     font-size: 13px;
   }
 }
+@media (max-width: 360px) {
+  .cook-tools {
+    gap: 6px;
+  }
+  .cook-tools button {
+    padding-inline: 8px;
+  }
+  .cook-timer-chip.active .timer-chip-label {
+    display: none;
+  }
+}
 @media (max-height: 480px) {
   .cook-panel-timer {
     inline-size: min(720px, calc(100% - 24px));
