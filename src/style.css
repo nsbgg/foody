@@ -904,6 +904,19 @@ main {
 .add-shopping label {
   flex: 1;
 }
+/* Hide the page scrollbar only while the full-screen cooking view is open. */
+html:has(.dialog.fullscreen:modal),
+.dialog.fullscreen,
+.cook-panel {
+  scrollbar-width: none;
+}
+@supports not (scrollbar-width: none) {
+  html:has(.dialog.fullscreen:modal)::-webkit-scrollbar,
+  .dialog.fullscreen::-webkit-scrollbar,
+  .cook-panel::-webkit-scrollbar {
+    display: none;
+  }
+}
 .dialog.fullscreen {
   inset: 0;
   inline-size: 100%;
@@ -917,7 +930,7 @@ main {
     max(20px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
     max(20px, env(safe-area-inset-left));
   background: #f5f7f4;
-  overflow: clip;
+  overflow: hidden;
 }
 .dialog.fullscreen > .close {
   inset-block-start: max(16px, env(safe-area-inset-top));
@@ -1080,7 +1093,7 @@ main {
   margin: auto;
   background: #fff;
   color: #202c24;
-  overflow: clip;
+  overflow: hidden;
 }
 .cook-panel[open] {
   display: grid;

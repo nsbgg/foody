@@ -83,6 +83,22 @@ async function frames(page: Page) {
   );
 }
 
+async function assertHiddenScrollbars(locator: Locator) {
+  const styles = await locator.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      scrollbarWidth: style.scrollbarWidth,
+      overflowX: style.overflowX,
+      overflowY: style.overflowY,
+    };
+  });
+  expect(styles).toEqual({
+    scrollbarWidth: "none",
+    overflowX: "hidden",
+    overflowY: "hidden",
+  });
+}
+
 async function inViewport(locator: Locator) {
   await expect(locator).toBeVisible();
   const geometry = await locator.evaluate((element) => {
@@ -168,7 +184,12 @@ for (const viewport of viewports) {
       page.getByText("Alles synchronisiert", { exact: true }),
     ).toBeVisible();
     await page.getByRole("button", { name: "Gerichte", exact: true }).click();
+    const normalScrollbar = await page
+      .locator("html")
+      .evaluate((element) => getComputedStyle(element).scrollbarWidth);
     await openCook(page, fixture.title);
+    await expect(page.locator("html")).toHaveCSS("scrollbar-width", "none");
+    await assertHiddenScrollbars(page.locator("dialog.fullscreen"));
     await expect(
       page.getByLabel("Timer Minuten", { exact: true }),
     ).toBeHidden();
@@ -226,6 +247,10 @@ for (const viewport of viewports) {
     await assertStepFits(page);
     await page.keyboard.press("Escape");
     await expect(page.locator("dialog:modal")).toHaveCount(0);
+    await expect(page.locator("html")).toHaveCSS(
+      "scrollbar-width",
+      normalScrollbar,
+    );
     await openCook(page, fixture.title);
     await expect(
       page.getByText("Schritt 2 von 2", { exact: true }),
@@ -252,6 +277,7 @@ test("optional cooking panels keep all ingredients and timer controls reachable 
   const panel = page.locator("dialog.cook-panel:modal");
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await expect(panel).toBeVisible();
+  await assertHiddenScrollbars(panel);
   await inViewport(
     panel.getByRole("button", { name: "Zurück zum Schritt", exact: true }),
   );
@@ -285,6 +311,7 @@ test("optional cooking panels keep all ingredients and timer controls reachable 
     .getByRole("button", { name: /^Timer(?:\s|$)/ })
     .click();
   await expect(panel).toBeVisible();
+  await assertHiddenScrollbars(panel);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await inViewport(
     panel.getByRole("button", { name: "Timer starten", exact: true }),

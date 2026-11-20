@@ -20,6 +20,8 @@ Lange Anweisungen werden entsprechend der tatsächlich verfügbaren Textfläche 
 
 ## Mengen und Timer beim Kochen
 
+Im Kochmodus sind die Scrollbalken des Vollbilddialogs, seiner Zutaten-/Timeransichten und der dahinterliegenden Seite ausgeblendet. Nach dem Schließen gilt wieder die normale Scrollbalkendarstellung der Seite. Die Seiteneinteilung hält die Kochinhalte weiterhin ohne Scrollen erreichbar.
+
 Erkannte Zutatennamen im aktuellen Schritt erhalten die auf die gewählten Portionen skalierte Gesamtmenge, etwa „Linsen (Rezeptmenge: 200 g)“. Die gespeicherte Anleitung bleibt unverändert. Die Kennzeichnung als Rezeptmenge unterscheidet den Gesamtvorrat von Anweisungen wie „die Hälfte“ oder „etwas“. Bereits ausgeschriebene Mengen werden nicht überschrieben oder automatisch skaliert, weil ihre Bedeutung als Teil- oder Gesamtmenge nicht sicher erkennbar ist. Unbekannte Mengen und mehrdeutige Namen bleiben unverändert; die Zutatenansicht enthält weiterhin die vollständige skalierte Liste.
 
 Die Erkennung verwendet vollständige Namen und eine kleine geprüfte Liste gebräuchlicher Varianten, etwa „Rote Linsen“/„Linsen“ und „Blattspinat“/„Spinat“. Sie ist keine freie Sprachinterpretation. Die gemessene Seiteneinteilung gilt auch für die ergänzten Mengenangaben.
