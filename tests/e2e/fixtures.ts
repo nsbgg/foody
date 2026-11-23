@@ -37,6 +37,25 @@ export const test = base.extend<
           expect(registration.status()).toBe(201);
           session = await registration.json();
           current = { request, session };
+        } else {
+          // Browser reauthentication can rotate the shared account's session.
+          const latest = await (
+            await current.request.get("/api/session")
+          ).json();
+          if (!latest.user) {
+            const loggedIn = await current.request.post("/api/auth/login", {
+              headers: { "X-CSRF-Token": latest.csrfToken },
+              data: {
+                email: current.session.user!.email,
+                password: "Test password with 20 characters!",
+              },
+            });
+            expect(loggedIn.status()).toBe(200);
+            current = {
+              request: current.request,
+              session: await loggedIn.json(),
+            };
+          } else current = { request: current.request, session: latest };
         }
         count++;
         return current;

@@ -46,7 +46,10 @@ export const extraSchema = z.object({
   checked: z.boolean(),
   deleted: z.boolean(),
 });
-export const checkSchema = z.object({ checked: z.boolean() });
+export const checkSchema = z.object({
+  checked: z.boolean(),
+  deleted: z.boolean().optional(),
+});
 export type Kind = "recipe" | "entry" | "extra" | "check";
 export type Row = {
   id: string;

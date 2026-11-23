@@ -23,6 +23,7 @@ import {
 } from "../account.ts";
 import { passkeysAvailable } from "./AuthGate.tsx";
 import { useStore } from "../store.ts";
+import { McpConnections } from "./McpConnections.tsx";
 
 type Member = {
   id: string;
@@ -483,6 +484,12 @@ export function AccountPanel({
             </button>
           </div>
         </div>
+      )}
+      {active && !onboarding && (
+        <McpConnections
+          key={`${account.user?.id}:${active.id}`}
+          householdName={active.name}
+        />
       )}
       {syncStatus && (
         <section className="account-section">

@@ -431,6 +431,28 @@ export class AccountService {
       }
       res.json(this.sessionView(this.rotate(req, res, user.id)));
     });
+    app.post("/api/auth/reauthenticate", async (req, res) => {
+      const session = this.requireUser(req, res);
+      if (!session) return;
+      const parsed = z
+        .object({ password: z.string().min(1).max(256) })
+        .safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: "Bitte dein Passwort eingeben." });
+        return;
+      }
+      const user = this.db
+        .prepare("SELECT * FROM users WHERE id=?")
+        .get(session.userId!) as User;
+      if (
+        !user ||
+        !(await passwordMatches(parsed.data.password, user.passwordHash))
+      ) {
+        res.status(400).json({ error: "Das Passwort stimmt nicht." });
+        return;
+      }
+      res.json(this.sessionView(this.rotate(req, res, user.id)));
+    });
     app.get("/api/auth/passkeys", (req, res) => {
       const session = this.requireUser(req, res);
       if (!session) return;
@@ -524,23 +546,51 @@ export class AccountService {
       }
     });
     app.post("/api/auth/passkeys/authentication/options", async (req, res) => {
-      const session = this.session(req, res);
+      const reauthenticate = req.body.reauthenticate === true;
+      const session = reauthenticate
+        ? this.requireUser(req, res)
+        : this.session(req, res);
+      if (!session) return;
       const options = await generateAuthenticationOptions({
         rpID: this.rpID,
         userVerification: "required",
+        ...(reauthenticate
+          ? {
+              allowCredentials: this.db
+                .prepare("SELECT id,transports FROM passkeys WHERE userId=?")
+                .all(session.userId!)
+                .map((key) => ({
+                  id: String(key.id),
+                  transports: JSON.parse(String(key.transports)),
+                })),
+            }
+          : {}),
       });
-      this.saveChallenge(session, "authenticate", options.challenge);
+      this.saveChallenge(
+        session,
+        reauthenticate ? "reauthenticate" : "authenticate",
+        options.challenge,
+      );
       res.json(options);
     });
     app.post("/api/auth/passkeys/authentication/verify", async (req, res) => {
-      const session = this.session(req, res);
+      const reauthenticate = req.body.reauthenticate === true;
+      const session = reauthenticate
+        ? this.requireUser(req, res)
+        : this.session(req, res);
+      if (!session) return;
       try {
-        const challenge = this.takeChallenge(session, "authenticate");
+        const challenge = this.takeChallenge(
+          session,
+          reauthenticate ? "reauthenticate" : "authenticate",
+        );
         const response = req.body.response as AuthenticationResponseJSON;
         const passkey = this.db
           .prepare("SELECT * FROM passkeys WHERE id=?")
           .get(response.id) as unknown as Passkey | undefined;
         if (!passkey) throw new Error("Unknown credential");
+        if (reauthenticate && passkey.userId !== session.userId)
+          throw new Error("Wrong account");
         const user = this.db
           .prepare("SELECT * FROM users WHERE id=?")
           .get(passkey.userId) as User;

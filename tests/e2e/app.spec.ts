@@ -108,7 +108,7 @@ test("pointer drag schedules a recipe in another day", async ({ page }) => {
   const card = page.locator(".stack-list .recipe-card").first();
   const target = page.locator(".day-column").last();
   const before = await target.locator(".meal").count();
-  const a = await card.boundingBox(),
+  const a = await card.locator(".card-drag-handle").boundingBox(),
     b = await target.boundingBox();
   await page.mouse.move(a!.x + a!.width / 2, a!.y + a!.height / 2);
   await page.mouse.down();

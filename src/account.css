@@ -1,7 +1,30 @@
 /* The existing kitchen-green surfaces and Instrument Sans remain the product's face.
    Desktop auth grid: 5 + 1 + 6 columns in a shared 1100px frame; mobile stacks. */
+.auth-shell {
+  min-height: 100dvh;
+  position: relative;
+  isolation: isolate;
+  background: var(--canvas);
+}
+.auth-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url("/repeating_bg_v2.svg") repeat 0 0 / 64px 64px;
+  opacity: 0.12;
+}
+:root[data-theme="dark"] .auth-shell::before {
+  opacity: 0.06;
+}
 .auth-header {
   justify-content: space-between;
+  background: var(--surface);
+}
+.auth-header > a,
+.auth-header .theme-toggle > svg {
+  filter: drop-shadow(0 1px 4px var(--surface));
 }
 main.auth-main {
   max-width: 1172px;
@@ -15,6 +38,15 @@ main.auth-main {
 .auth-intro {
   grid-column: 1;
   padding-block: 26px;
+}
+.auth-intro h1,
+.auth-intro p,
+.auth-kitchen-note > span {
+  text-shadow:
+    0 2px 2px var(--canvas),
+    0 0 6px var(--canvas),
+    0 0 10px var(--canvas),
+    0 0 16px var(--canvas);
 }
 .auth-intro h1 {
   font-size: 32px;
@@ -48,6 +80,9 @@ main.auth-main {
   background: var(--surface);
   border-radius: 16px;
   min-width: 0;
+  box-shadow:
+    0 0 20px 4px var(--canvas),
+    0 1px 8px var(--canvas);
 }
 .auth-form-panel h2 {
   font-size: 24px;
@@ -247,6 +282,38 @@ main.auth-main {
 .account-logout {
   margin-top: 20px;
   min-height: 44px;
+}
+.mcp-permissions legend {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.mcp-permission-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.mcp-permission-row strong {
+  flex-basis: 100%;
+  font-size: 13px;
+  font-weight: 500;
+}
+.account-panel .mcp-permission-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin: 0;
+  cursor: pointer;
+}
+.account-panel .mcp-permission-row input {
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  min-height: 20px;
+  accent-color: var(--green);
 }
 .account-onboarding {
   max-width: 660px;

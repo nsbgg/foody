@@ -10,6 +10,8 @@ import { importRecipe } from "./recipe-import.ts";
 import { allowedHosts, trustedHost, trustedApiRequest } from "./origin.ts";
 import { AccountService } from "./accounts.ts";
 import { HouseholdService, HouseholdError } from "./households.ts";
+import { McpAccessService } from "./mcp-access.ts";
+import { installMcpTransport, installMcpManagement } from "./mcp.ts";
 const hosts = allowedHosts(process.env.ALLOWED_HOSTS);
 mkdirSync(process.env.DATA_DIR || "data", { recursive: true });
 const store = new Store(
@@ -54,6 +56,8 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: "8mb" }));
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 accounts.install(app);
+const mcpAccess = new McpAccessService(accounts.db, households);
+installMcpTransport(app, mcpAccess, store);
 const apiLimit = new Map<string, { count: number; until: number }>();
 app.use("/api", (req, res, next) => {
   const session = accounts.requireUser(req, res);
@@ -81,6 +85,7 @@ app.use("/api", (req, res, next) => {
   }
   next();
 });
+installMcpManagement(app, accounts, households, mcpAccess);
 app.get("/api/households", (req, res) => {
   const session = accounts.requireUser(req, res)!;
   res.json({ households: households.list(session.userId!) });

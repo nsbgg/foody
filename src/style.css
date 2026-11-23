@@ -25,6 +25,8 @@
   --toast-bg: var(--ink);
   --toast-text: var(--surface);
   --radius: 8px;
+  --app-width: 2240px;
+  --page-gutter: 36px;
   --theme-duration: 600ms;
   --theme-easing: cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -235,7 +237,11 @@ legend {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 0 36px;
+  padding: 0
+    max(
+      var(--page-gutter),
+      calc((100% - var(--app-width)) / 2 + var(--page-gutter))
+    );
   border-bottom: 1px solid var(--line);
   background: var(--surface);
 }
@@ -320,7 +326,12 @@ nav {
 }
 .account-menu {
   position: fixed;
-  inset: 76px 24px auto auto;
+  inset: 76px
+    max(
+      var(--page-gutter),
+      calc((100% - var(--app-width)) / 2 + var(--page-gutter))
+    )
+    auto auto;
   width: 290px;
   max-width: calc(100vw - 32px);
   max-height: calc(100dvh - 92px);
@@ -366,9 +377,21 @@ nav {
   }
 }
 main {
-  max-width: 1800px;
+  max-width: var(--app-width);
   margin: auto;
-  padding: 24px 36px;
+  padding: 24px var(--page-gutter);
+}
+main.shopping-main {
+  max-width: calc(850px + 2 * var(--page-gutter));
+}
+@media (min-width: 1101px) {
+  .app-header:not(.auth-header) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+  .app-header .header-actions {
+    justify-self: end;
+  }
 }
 .page-heading {
   display: flex;
@@ -680,12 +703,100 @@ main {
 .meal-actions .text-button {
   font-size: 13px;
 }
-.meal,
-.recipe-card {
+.has-drag-handle {
+  position: relative;
+  --grip-surface: var(--surface);
+}
+.meal.has-drag-handle {
+  --grip-surface: var(--panel);
+}
+button.card-drag-handle {
+  --grip-radius: 8px;
+  position: absolute;
+  inset: 0 auto auto 0;
+  z-index: 1;
+  inline-size: 44px;
+  min-block-size: 28px;
+  block-size: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 0 0 var(--grip-radius) 0;
+  align-items: flex-start;
+  background: transparent;
+  color: var(--muted);
   cursor: grab;
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
+}
+button.card-drag-handle::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  inline-size: 44px;
+  block-size: 24px;
+  border-radius: 0 0 var(--grip-radius) 0;
+  background: var(--grip-surface);
+}
+button.card-drag-handle::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  inline-size: calc(44px + var(--grip-radius));
+  block-size: calc(24px + var(--grip-radius));
+  /* Matching concave curves connect the notch to the top and left edges. */
+  --grip-curve: radial-gradient(
+    circle at 100% 100%,
+    transparent calc(var(--grip-radius) - 0.5px),
+    var(--grip-surface) var(--grip-radius)
+  );
+  background:
+    var(--grip-curve) right top / var(--grip-radius) var(--grip-radius)
+      no-repeat,
+    var(--grip-curve) left bottom / var(--grip-radius) var(--grip-radius)
+      no-repeat;
+  pointer-events: none;
+}
+button.card-drag-handle svg {
+  position: relative;
+  margin-block-start: 4px;
+}
+button.card-drag-handle:hover,
+button.card-drag-handle:focus-visible {
+  background: transparent;
+  color: var(--green);
+  --grip-surface: var(--selected);
+}
+@media (pointer: coarse) {
+  button.card-drag-handle {
+    inline-size: 44px;
+    block-size: 44px;
+    min-block-size: 44px;
+  }
+}
+.recipe-stack.accepting-return {
+  outline: 1px dashed var(--control-line);
+  outline-offset: 8px;
+  border-radius: 8px;
+}
+.recipe-stack.return-target {
+  outline: 2px solid var(--green);
+  background: var(--selected);
+}
+.stack-return-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-block-end: 12px;
+  border-radius: 6px;
+  background: var(--selected);
+  color: var(--ink);
+  font-size: 13px;
+}
+.stack-return-hint svg {
+  flex-shrink: 0;
+  color: var(--green);
 }
 .dragging,
 .dragging * {
@@ -917,7 +1028,7 @@ main {
 }
 .recipe-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
 }
 .recipe-grid .recipe-card {
@@ -1080,8 +1191,11 @@ main {
 }
 .shopping-page {
   max-width: 850px;
+  margin-inline: auto;
 }
 .page-heading.shopping-heading {
+  max-width: 850px;
+  margin-inline: auto;
   margin-bottom: 8px;
 }
 .shopping-week-nav {
@@ -1340,7 +1454,11 @@ html:has(.dialog.fullscreen:modal),
 }
 .dialog.fullscreen > .close {
   inset-block-start: max(16px, env(safe-area-inset-top));
-  inset-inline-end: max(20px, env(safe-area-inset-right));
+  inset-inline-end: max(
+    20px,
+    env(safe-area-inset-right),
+    calc((100% - 1200px) / 2)
+  );
   inline-size: 44px;
   block-size: 44px;
   background: var(--panel);
@@ -2117,6 +2235,9 @@ html:has(.dialog.fullscreen:modal),
   color: var(--danger);
 }
 @media (min-width: 1450px) {
+  :root {
+    --page-gutter: 48px;
+  }
   main {
     padding: 24px 48px;
   }

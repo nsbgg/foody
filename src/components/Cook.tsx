@@ -453,7 +453,9 @@ export function Cook({
               }}
             >
               <Clock3 size={18} aria-hidden="true" />
-              <span className="timer-chip-label">Timer</span>
+              <span className="timer-chip-label">
+                Timer{timerActive ? " " : ""}
+              </span>
               {timerActive && (
                 <span
                   className="cook-timer-count timer-chip-value"

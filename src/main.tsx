@@ -19,6 +19,8 @@ import {
   Pencil,
   Play,
   Minus,
+  GripHorizontal,
+  Undo2,
 } from "lucide-react";
 import "@fontsource/instrument-sans/400.css";
 import "@fontsource/instrument-sans/500.css";
@@ -26,7 +28,12 @@ import "@fontsource/instrument-sans/600.css";
 import "./style.css";
 import "./account.css";
 import { PwaUpdate } from "./PwaUpdate.tsx";
-import { useStore, change, resolveConflict } from "./store.ts";
+import {
+  useStore,
+  change,
+  resolveConflict,
+  privateStoragePrefix,
+} from "./store.ts";
 import { useAccount } from "./account.ts";
 import { AuthGate, AccountShell } from "./components/AuthGate.tsx";
 import { AccountPanel } from "./components/AccountPanel.tsx";
@@ -162,13 +169,21 @@ function App() {
     pointer: number;
     x: number;
     y: number;
+    currentX: number;
+    currentY: number;
     active: boolean;
     source: HTMLElement;
     offsetX: number;
     offsetY: number;
     preview: HTMLElement | null;
   } | null>(null);
+  const dragScrollFrame = useRef<number | undefined>(undefined);
+  const dragScrollTime = useRef<number | undefined>(undefined);
   const [dropDay, setDropDay] = useState("");
+  const [draggedKind, setDraggedKind] = useState<"recipe" | "entry" | null>(
+    null,
+  );
+  const [dropStack, setDropStack] = useState(false);
   const suppressDragClick = useRef(false);
   function pointerDown(
     e: React.PointerEvent<HTMLElement>,
@@ -176,16 +191,19 @@ function App() {
   ) {
     if (e.button !== 0 || !e.isPrimary) return;
     suppressDragClick.current = false;
-    // Capture on the pressed child so a normal button click keeps its target.
-    (e.target as Element).setPointerCapture(e.pointerId);
-    const bounds = e.currentTarget.getBoundingClientRect();
+    const source = e.currentTarget.closest<HTMLElement>("article");
+    if (!source) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const bounds = source.getBoundingClientRect();
     dragRef.current = {
       row,
       pointer: e.pointerId,
       x: e.clientX,
       y: e.clientY,
+      currentX: e.clientX,
+      currentY: e.clientY,
       active: false,
-      source: e.currentTarget,
+      source,
       offsetX: e.clientX - bounds.left,
       offsetY: e.clientY - bounds.top,
       preview: null,
@@ -194,7 +212,13 @@ function App() {
   function pointerMove(e: React.PointerEvent) {
     const d = dragRef.current;
     if (!d || d.pointer !== e.pointerId) return;
-    if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) d.active = true;
+    d.currentX = e.clientX;
+    d.currentY = e.clientY;
+    if (!d.active && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) {
+      d.active = true;
+      setDraggedKind(d.row.kind === "entry" ? "entry" : "recipe");
+      dragScrollFrame.current = requestAnimationFrame(scrollDuringDrag);
+    }
     if (!d.active) return;
     if (!d.preview) {
       const bounds = d.source.getBoundingClientRect();
@@ -208,11 +232,14 @@ function App() {
       const copy = d.source.cloneNode(true) as HTMLElement;
       for (const element of [
         copy,
-        ...copy.querySelectorAll("[id], [data-entry], [data-date]"),
+        ...copy.querySelectorAll(
+          "[id], [data-entry], [data-date], [data-recipe]",
+        ),
       ]) {
         element.removeAttribute("id");
         element.removeAttribute("data-entry");
         element.removeAttribute("data-date");
+        element.removeAttribute("data-recipe");
       }
       preview.append(copy);
       document.body.append(preview);
@@ -221,11 +248,47 @@ function App() {
     }
     d.preview.style.transform = `translate3d(${e.clientX - d.offsetX}px, ${e.clientY - d.offsetY}px, 0)`;
     suppressDragClick.current = true;
-    const target = document
-      .elementFromPoint(e.clientX, e.clientY)
-      ?.closest<HTMLElement>("[data-date]");
-    setDropDay(target?.dataset.date || "");
+    updateDropTarget(e.clientX, e.clientY, d.row);
     document.documentElement.classList.add("dragging");
+  }
+  function updateDropTarget(x: number, y: number, row: RecipeRow | EntryRow) {
+    const direction = scrollZoneAt(x, y);
+    if (direction) {
+      setDropDay("");
+      setDropStack(false);
+      return;
+    }
+    const hovered = document.elementFromPoint(x, y);
+    const target = hovered?.closest<HTMLElement>("[data-date]");
+    setDropDay(target?.dataset.date || "");
+    setDropStack(
+      row.kind === "entry" && !!hovered?.closest("[data-recipe-stack]"),
+    );
+  }
+  function scrollZoneAt(x: number, y: number): "up" | "down" | null {
+    if (x < 0 || x > window.innerWidth || y < 0 || y > window.innerHeight)
+      return null;
+    return y < 80 ? "up" : y > window.innerHeight - 80 ? "down" : null;
+  }
+  function scrollDuringDrag(timestamp: number) {
+    const d = dragRef.current;
+    if (!d?.active) return;
+    const elapsed = Math.min(
+      32,
+      timestamp - (dragScrollTime.current ?? timestamp - 16),
+    );
+    dragScrollTime.current = timestamp;
+    const direction = scrollZoneAt(d.currentX, d.currentY);
+    if (direction) {
+      const depth =
+        direction === "up"
+          ? (80 - d.currentY) / 80
+          : (d.currentY - window.innerHeight + 80) / 80;
+      const distance = ((180 + depth * 540) * elapsed) / 1000;
+      window.scrollBy(0, direction === "up" ? -distance : distance);
+      updateDropTarget(d.currentX, d.currentY, d.row);
+    }
+    dragScrollFrame.current = requestAnimationFrame(scrollDuringDrag);
   }
   function pointerEnd(e: React.PointerEvent) {
     const d = dragRef.current;
@@ -235,20 +298,80 @@ function App() {
     const before = entries.find(
       (r) => r.id === el?.closest<HTMLElement>("[data-entry]")?.dataset.entry,
     );
-    if (d.active && date) {
+    if (d.active && !scrollZoneAt(e.clientX, e.clientY) && date) {
       if (d.row.kind === "entry") move(d.row as EntryRow, date, before);
       else plan(d.row as RecipeRow, date);
+    } else if (
+      d.active &&
+      !scrollZoneAt(e.clientX, e.clientY) &&
+      d.row.kind === "entry" &&
+      el?.closest("[data-recipe-stack]")
+    ) {
+      void returnToStack(d.row as EntryRow);
     }
     cancelDrag();
   }
   function cancelDrag() {
+    if (dragScrollFrame.current !== undefined)
+      cancelAnimationFrame(dragScrollFrame.current);
+    dragScrollFrame.current = undefined;
+    dragScrollTime.current = undefined;
     dragRef.current?.preview?.remove();
     dragRef.current?.source.classList.remove("card-drag-source");
     dragRef.current = null;
     setDropDay("");
+    setDropStack(false);
+    setDraggedKind(null);
     document.documentElement.classList.remove("dragging");
   }
-  function cardDragEvents(row: RecipeRow | EntryRow) {
+  async function returnToStack(row: EntryRow) {
+    const scope = privateStoragePrefix();
+    const source = recipes.find((recipe) => recipe.id === row.data.recipeId);
+    if (!source || source.data.archived) {
+      const id =
+        source?.id ||
+        (row.data.recipeId.length > 0 && row.data.recipeId.length <= 500
+          ? row.data.recipeId
+          : crypto.randomUUID());
+      const restored = await change(
+        "recipe",
+        id,
+        { ...(source?.data || row.data.recipe), archived: false },
+        source?.rev,
+      );
+      if (!restored || scope !== privateStoragePrefix()) return;
+    }
+    const saved = await change(
+      "entry",
+      row.id,
+      { ...row.data, deleted: true },
+      row.rev,
+    );
+    if (saved && scope === privateStoragePrefix()) {
+      setQuery("");
+      setFilter("Alle");
+      setNotice(`${row.data.recipe.title} zurück im Gerichtestapel`);
+    }
+  }
+  function dragHandle(row: RecipeRow | EntryRow) {
+    const title =
+      row.kind === "entry"
+        ? (row as EntryRow).data.recipe.title
+        : (row as RecipeRow).data.title;
+    return (
+      <button
+        type="button"
+        className="card-drag-handle"
+        aria-label={`${title} verschieben`}
+        title="Ziehen zum Verschieben. Klicken für die Planung."
+        {...handleDragEvents(row)}
+        onClick={() => setModal({ type: "plan", row })}
+      >
+        <GripHorizontal size={18} aria-hidden="true" />
+      </button>
+    );
+  }
+  function handleDragEvents(row: RecipeRow | EntryRow) {
     return {
       onPointerDown: (event: React.PointerEvent<HTMLElement>) =>
         pointerDown(event, row),
@@ -273,6 +396,8 @@ function App() {
     window.addEventListener("keydown", f);
     return () => {
       window.removeEventListener("keydown", f);
+      if (dragScrollFrame.current !== undefined)
+        cancelAnimationFrame(dragScrollFrame.current);
       dragRef.current?.preview?.remove();
       document.documentElement.classList.remove("dragging");
     };
@@ -312,9 +437,15 @@ function App() {
       </button>
     </div>
   );
-  function recipeCard(row: RecipeRow) {
+  function recipeCard(row: RecipeRow, draggable = false) {
     return (
-      <article className="recipe-card" key={row.id} {...cardDragEvents(row)}>
+      <article
+        className={`recipe-card${draggable ? " has-drag-handle" : ""}`}
+        key={row.id}
+        data-recipe={row.id}
+        onDragStart={(event) => event.preventDefault()}
+      >
+        {draggable && dragHandle(row)}
         <button
           className="image-button"
           onClick={() => setModal({ type: "recipe", row })}
@@ -428,7 +559,10 @@ function App() {
           </div>
         </div>
       </header>
-      <main id="main">
+      <main
+        id="main"
+        className={view === "shopping" ? "shopping-main" : undefined}
+      >
         <div
           className={`page-heading${view === "shopping" ? " shopping-heading" : ""}`}
         >
@@ -534,11 +668,14 @@ function App() {
                             <div className="day-meals">
                               {meals.map((row) => (
                                 <article
-                                  className="meal"
+                                  className="meal has-drag-handle"
                                   key={row.id}
                                   data-entry={row.id}
-                                  {...cardDragEvents(row)}
+                                  onDragStart={(event) =>
+                                    event.preventDefault()
+                                  }
                                 >
+                                  {dragHandle(row)}
                                   <div className="meal-layout">
                                     <FoodArt
                                       recipe={row.data.recipe}
@@ -636,7 +773,10 @@ function App() {
                       </span>
                     </div>
                   </section>
-                  <aside className="recipe-stack">
+                  <aside
+                    data-recipe-stack=""
+                    className={`recipe-stack${draggedKind === "entry" ? " accepting-return" : ""}${dropStack ? " return-target" : ""}`}
+                  >
                     <div className="section-heading">
                       <h2>
                         <BookOpen size={18} />
@@ -646,6 +786,15 @@ function App() {
                         {recipes.filter((r) => !r.data.archived).length}
                       </span>
                     </div>
+                    {draggedKind === "entry" && (
+                      <div className="stack-return-hint">
+                        <Undo2 size={17} aria-hidden="true" />
+                        <span>
+                          Hier ablegen, um das Gericht aus dem Wochenplan zu
+                          nehmen
+                        </span>
+                      </div>
+                    )}
                     <label className="search">
                       <Search size={16} />
                       <span className="sr-only">Gerichte suchen</span>
@@ -668,7 +817,7 @@ function App() {
                       ))}
                     </div>
                     <div className="stack-list">
-                      {filtered.map(recipeCard)}
+                      {filtered.map((row) => recipeCard(row, true))}
                       {!filtered.length && (
                         <p className="empty">
                           Keine passenden Gerichte. Ändere die Suche oder lege
@@ -761,7 +910,9 @@ function App() {
                     : "Deine Rezeptsammlung"}{" "}
                   <span>{filtered.length}</span>
                 </h2>
-                <div className="recipe-grid">{filtered.map(recipeCard)}</div>
+                <div className="recipe-grid">
+                  {filtered.map((row) => recipeCard(row))}
+                </div>
                 {!filtered.length && (
                   <p className="empty">
                     Hier sind noch keine passenden Gerichte. Lege dein erstes

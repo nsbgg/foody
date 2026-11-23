@@ -118,6 +118,13 @@ const channel =
 function emit() {
   listeners.forEach((listener) => listener());
 }
+export class AccountRequestError extends Error {
+  code?: string;
+  constructor(message: string, code?: string) {
+    super(message);
+    this.code = code;
+  }
+}
 async function rawRequest<T>(
   path: string,
   body?: unknown,
@@ -142,8 +149,9 @@ async function rawRequest<T>(
   });
   const result = response.status === 204 ? {} : await response.json();
   if (!response.ok)
-    throw new Error(
+    throw new AccountRequestError(
       result.error || "Die Anfrage konnte nicht abgeschlossen werden.",
+      result.code,
     );
   return result as T;
 }
@@ -270,6 +278,9 @@ export function registerAccount(body: {
 export function loginAccount(body: { email: string; password: string }) {
   return mutation("/api/auth/login", body);
 }
+export function confirmAccountWithPassword(password: string) {
+  return mutation("/api/auth/reauthenticate", { password });
+}
 export function createHousehold(name: string) {
   return mutation("/api/households", { name });
 }
@@ -309,11 +320,20 @@ export async function logoutAccount() {
   }
 }
 export async function loginWithPasskey() {
+  return authenticatePasskey(false);
+}
+export async function confirmAccountWithPasskey() {
+  return authenticatePasskey(true);
+}
+async function authenticatePasskey(reauthenticate: boolean) {
   const optionsJSON = await accountRequest<
     Parameters<typeof startAuthentication>[0]["optionsJSON"]
-  >("/api/auth/passkeys/authentication/options", {});
+  >("/api/auth/passkeys/authentication/options", { reauthenticate });
   const response = await startAuthentication({ optionsJSON });
-  await mutation("/api/auth/passkeys/authentication/verify", { response });
+  await mutation("/api/auth/passkeys/authentication/verify", {
+    response,
+    reauthenticate,
+  });
 }
 export async function registerPasskey(name: string) {
   const optionsJSON = await accountRequest<

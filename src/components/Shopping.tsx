@@ -24,7 +24,15 @@ export function Shopping({
       return false;
     }
   });
-  const items = shoppingList(entries.map((e) => e.data));
+  const items = shoppingList(entries.map((e) => e.data)).filter(
+    (item) =>
+      !(
+        rows.find(
+          (row) =>
+            row.kind === "check" && row.id === `check:${weekKey}:${item.key}`,
+        )?.data as { deleted?: boolean } | undefined
+      )?.deleted,
+  );
   const extras = rows.filter(
     (r) =>
       r.kind === "extra" &&

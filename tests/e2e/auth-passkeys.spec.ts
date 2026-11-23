@@ -104,6 +104,58 @@ test("real WebAuthn registration and passwordless login verify cryptographic ass
       })
     ).status(),
   ).toBe(400);
+  const confirmOptions = await (
+    await post("/api/auth/passkeys/authentication/options", {
+      reauthenticate: true,
+    })
+  ).json();
+  expect(
+    confirmOptions.allowCredentials.map(
+      (credential: { id: string }) => credential.id,
+    ),
+  ).toContain(listed.passkeys[0].id);
+  const confirmAssertion = await page.evaluate(async (optionsJSON) => {
+    const credential = (await navigator.credentials.get({
+      publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(optionsJSON),
+    })) as PublicKeyCredential;
+    return credential.toJSON();
+  }, confirmOptions);
+  const confirmed = await post("/api/auth/passkeys/authentication/verify", {
+    response: confirmAssertion,
+    reauthenticate: true,
+  });
+  expect(confirmed.status()).toBe(200);
+  session = await confirmed.json();
+  expect(session.user.email).toBe(email);
+  const other = await post("/api/auth/register", {
+    name: "Other",
+    email: `other-${crypto.randomUUID()}@example.com`,
+    password: "other-strong-password-123",
+  });
+  session = await other.json();
+  const otherId = session.user.id;
+  const otherOptions = await (
+    await post("/api/auth/passkeys/authentication/options", {
+      reauthenticate: true,
+    })
+  ).json();
+  const otherAssertion = await page.evaluate(async (optionsJSON) => {
+    const credential = (await navigator.credentials.get({
+      publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(optionsJSON),
+    })) as PublicKeyCredential;
+    return credential.toJSON();
+  }, otherOptions);
+  expect(
+    (
+      await post("/api/auth/passkeys/authentication/verify", {
+        response: otherAssertion,
+        reauthenticate: true,
+      })
+    ).status(),
+  ).toBe(400);
+  expect(
+    (await (await context.request.get("/api/session")).json()).user.id,
+  ).toBe(otherId);
   await cdp.send("WebAuthn.removeVirtualAuthenticator", { authenticatorId });
 });
 

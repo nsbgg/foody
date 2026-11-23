@@ -59,6 +59,67 @@ const credentials = {
   email: "test@example.com",
   password: "a-secure-password-123",
 };
+test("reauthentication verifies the current account, rotates the session and preserves household selection", async () => {
+  const f = await fixture();
+  try {
+    await f.request("/api/session");
+    const registered = await f.request("/api/auth/register", credentials);
+    const oldCookie = registered.cookie;
+    f.service.setHouseholdGetter((userId) =>
+      userId === registered.data.user.id
+        ? [{ id: "home", name: "Home", role: "owner" }]
+        : [],
+    );
+    const stale = Date.now() - 60 * 60_000;
+    f.service.db
+      .prepare(
+        "UPDATE sessions SET authenticatedAt=?,activeHouseholdId=? WHERE userId=?",
+      )
+      .run(stale, "home", registered.data.user.id);
+    assert.equal(
+      (await f.request("/api/auth/reauthenticate", { password: "wrong" }))
+        .status,
+      400,
+    );
+    assert.equal(
+      Number(
+        f.service.db
+          .prepare("SELECT authenticatedAt FROM sessions WHERE userId=?")
+          .get(registered.data.user.id)!.authenticatedAt,
+      ),
+      stale,
+    );
+    assert.equal(
+      (
+        await f.request(
+          "/api/auth/reauthenticate",
+          { password: credentials.password },
+          { "X-CSRF-Token": "wrong" },
+        )
+      ).status,
+      403,
+    );
+    const confirmed = await f.request("/api/auth/reauthenticate", {
+      password: credentials.password,
+    });
+    assert.equal(confirmed.status, 200);
+    assert.equal(confirmed.data.user.id, registered.data.user.id);
+    assert.notEqual(confirmed.cookie, oldCookie);
+    const session = f.service.db
+      .prepare(
+        "SELECT authenticatedAt,activeHouseholdId FROM sessions WHERE userId=?",
+      )
+      .get(registered.data.user.id)!;
+    assert.ok(Number(session.authenticatedAt) > stale);
+    assert.equal(session.activeHouseholdId, "home");
+    assert.equal(
+      (await f.request("/private", undefined, { Cookie: oldCookie })).status,
+      401,
+    );
+  } finally {
+    f.close();
+  }
+});
 
 test("passwords use random salted scrypt and reject wrong passwords", async () => {
   const first = await passwordHash(credentials.password),

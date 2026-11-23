@@ -1,4 +1,4 @@
-# Foody
+# <img src="./public/foody_small.svg" height="22px" alt=""> Foody
 
 Eine React-PWA mit Node.js-Backend für einen gemeinsamen Haushalt: Wochenplanung von Montag bis Sonntag, Rezeptstapel, Rezeptimport, Einkaufsliste und ein großer Schritt-für-Schritt-Kochmodus.
 
@@ -18,8 +18,10 @@ Zur Entwicklung: `npm run dev`, dann die von Vite angezeigte Adresse öffnen (no
 
 ## Funktionen
 
+- **KI-Anbindung:** Im Account-Menü haushaltsgebundene MCP-Verbindungen mit getrennten Lese-, Schreib- und Löschrechten für Rezepte, Wochenplan und Einkaufsliste erstellen. Mehrere Rezepte auf einmal hinzufügen, bearbeiten, planen und Einkäufe abhaken oder entfernen. Schlüssel sind wahlweise befristet oder unbegrenzt gültig und einzeln widerrufbar. Einrichtung und Werkzeugliste: [MCP-Anbindung](./docs/mcp.md).
+
 - **Accounts und Haushalte:** Anmeldung mit Passwort oder Passkey, mehrere Haushalte pro Account und persönliche Einladungscodes für weitere Mitglieder. Profilbild anklicken, um Haushalte, Mitglieder, Passkeys und den Synchronisierungsstatus zu verwalten.
-- **Wochenplan:** mehrere Gerichte pro Tag, beliebige Wochen, dieselben Rezepte mehrfach verwendbar. Am Desktop mit sieben Spalten, am Handy mit Tagesansicht und Wochenleiste. Über den Griff ziehen oder mit „Einplanen“ beziehungsweise „Ändern“ ein Datum auswählen. Beim Ziehen vor einem anderen Gericht wird die Reihenfolge angepasst.
+- **Wochenplan:** mehrere Gerichte pro Tag, beliebige Wochen, dieselben Rezepte mehrfach verwendbar. Am Desktop mit sieben Spalten, am Handy mit Tagesansicht und Wochenleiste. Zum Ziehen dient ausschließlich die kleine Grifflasche oben links auf dem Kartenbild; Rezepttitel öffnen wie gewohnt das Rezept. Mit „Einplanen“ beziehungsweise „Ändern“ lässt sich ein Datum auswählen. Beim Ziehen vor einem anderen Gericht wird die Reihenfolge angepasst. Zurückziehen in den Gerichtestapel entfernt nur den Planeintrag und erhält das Rezept. Im Tab „Gerichte“ gibt es keine Ziehfunktion.
 - **Gerichtestapel:** eigene Rezepte, Suche nach Namen oder Zutaten, Kategorien und Schnellfilter. Rezepte archivieren und wiederherstellen. Pro Rezept Portionen, strukturierte Zutaten, Kochschritte, Dauer, optionale Bildadresse und Quelle.
 - **Import:** öffentliche HTTP-/HTTPS-Seiten mit Schema.org-Recipe-Daten in JSON-LD. Der Import unterstützt verschachtelte Rezeptabschnitte, Mengen, Bilder und Quellen. Vor dem Speichern sind alle Daten bearbeitbar. Nicht unterstützte oder blockierte Seiten liefern eine verständliche Fehlermeldung; fehlende Angaben lassen sich ergänzen. Login- und JavaScript-Scraping sind nicht enthalten.
 - **Einkauf:** automatische Skalierung nach Portionen pro Planeintrag. Gramm/Kilogramm sowie Milliliter/Liter werden zusammengeführt. Unterschiedliche Einheiten bleiben getrennt. Zusätzliche Artikel und abhakbare Einträge werden mit dem Haushalt synchronisiert.

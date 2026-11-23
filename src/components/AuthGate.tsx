@@ -19,7 +19,7 @@ export function passkeysAvailable() {
 
 export function AccountShell({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <div className="auth-shell">
       <header className="app-header auth-header">
         <a href="/" aria-label="Foody Startseite">
           <img
@@ -35,7 +35,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
       <main className="auth-main" id="main">
         {children}
       </main>
-    </>
+    </div>
   );
 }
 
