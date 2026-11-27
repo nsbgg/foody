@@ -312,9 +312,7 @@ export function ShareRecipes({
               )}
               <button
                 className="primary"
-                disabled={
-                  rows.length > 20 || !householdId || store.pending.length > 0
-                }
+                disabled={!householdId || store.pending.length > 0}
               >
                 <Link size={17} />
                 {busy ? "Wird erstellt …" : "Freigabelink erstellen"}

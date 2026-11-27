@@ -115,7 +115,7 @@ test("recipe shares are immutable bulk snapshots and tokens are hashed at rest",
   }
 });
 
-test("sharing validates bounded lifetimes, recipe count, duplicates and target schema", () => {
+test("sharing validates bounded lifetimes, nonempty selection, duplicates and target schema", () => {
   for (const expiresInDays of [0, 31, null, Infinity])
     assert.equal(
       createRecipeShareSchema.safeParse({
@@ -125,11 +125,7 @@ test("sharing validates bounded lifetimes, recipe count, duplicates and target s
       }).success,
       false,
     );
-  for (const recipeIds of [
-    [],
-    ["a", "a"],
-    Array.from({ length: 21 }, (_, i) => String(i)),
-  ])
+  for (const recipeIds of [[], ["a", "a"]])
     assert.equal(
       createRecipeShareSchema.safeParse({
         recipeIds,
@@ -144,6 +140,32 @@ test("sharing validates bounded lifetimes, recipe count, duplicates and target s
     }).success,
     false,
   );
+});
+
+test("more than twenty recipes can be shared and imported together", () => {
+  const f = fixture();
+  try {
+    const ids = Array.from({ length: 50 }, () => randomUUID());
+    for (const id of ids)
+      f.store.apply(
+        { opId: randomUUID(), id, kind: "recipe", baseRev: 0, data: recipe },
+        f.source.id,
+      );
+    const { share, token } = f.service.create("alice", f.source.id, {
+      recipeIds: ids,
+      target: { kind: "guest" },
+      expiresInDays: 7,
+    });
+    assert.equal(share.recipeCount, 50);
+    assert.equal(
+      f.service.accept("bob", share.id, token, f.destination.id).recipeIds
+        .length,
+      50,
+    );
+    assert.equal(f.store.rows(f.destination.id).length, 50);
+  } finally {
+    f.close();
+  }
 });
 
 test("archived recipes can be explicitly shared as active independent copies", () => {

@@ -146,26 +146,32 @@ export class RecipeSharingService {
         "share_limit",
         "Zu viele Freigaben. Widerrufe alte Links oder warte kurz.",
       );
-    const rows = this.store
-      .rows(householdId)
-      .filter((row) => row.kind === "recipe");
-    const recipes = parsed.recipeIds.map((id) => {
-      const row = rows.find((r) => r.id === id);
+    const rows = new Map(
+      this.store
+        .rows(householdId)
+        .filter((row) => row.kind === "recipe")
+        .map((row) => [row.id, row]),
+    );
+    let bytes = 2; // JSON array brackets; stop before accumulating an oversized batch.
+    const recipes = parsed.recipeIds.map((id, index) => {
+      const row = rows.get(id);
       if (!row)
         throw new RecipeSharingError(
           404,
           "recipe_not_found",
           "Ein ausgewähltes Rezept ist nicht verfügbar.",
         );
-      return snapshot(row.data);
+      const serialized = JSON.stringify(snapshot(row.data));
+      bytes += Buffer.byteLength(serialized) + (index > 0 ? 1 : 0);
+      if (bytes > MAX_BYTES)
+        throw new RecipeSharingError(
+          413,
+          "share_too_large",
+          "Die ausgewählten Rezepte sind zusammen zu groß. Teile weniger Rezepte gleichzeitig.",
+        );
+      return serialized;
     });
-    const snapshots = JSON.stringify(recipes);
-    if (Buffer.byteLength(snapshots) > MAX_BYTES)
-      throw new RecipeSharingError(
-        413,
-        "share_too_large",
-        "Die ausgewählten Rezepte sind zusammen zu groß. Teile weniger Rezepte gleichzeitig.",
-      );
+    const snapshots = `[${recipes.join(",")}]`;
     const token = randomBytes(32).toString("base64url");
     const row: ShareRow = {
       id: randomUUID(),

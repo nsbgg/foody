@@ -2,6 +2,81 @@ import { test, expect, type APIRequestContext } from "./fixtures.ts";
 import { randomUUID } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 
+test("bulk selection has no recipe count limit and stays below the sticky navigation", async ({
+  page,
+  request,
+}) => {
+  const state = await (await request.get("/api/state")).json();
+  const original = state.rows.find(
+    (row: { kind: string }) => row.kind === "recipe",
+  );
+  const operations = Array.from({ length: 25 }, (_, i) => ({
+    opId: randomUUID(),
+    id: randomUUID(),
+    kind: "recipe",
+    baseRev: 0,
+    data: { ...original.data, title: `Bulk recipe ${i}` },
+  }));
+  expect((await request.post("/api/sync", { data: { operations } })).ok()).toBe(
+    true,
+  );
+  await page.goto("/");
+  await page.getByRole("button", { name: "Gerichte", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Rezepte auswählen", exact: true })
+    .click();
+  const bar = page.getByRole("region", { name: "Rezeptauswahl" });
+  const checkboxes = page.locator(".recipe-share-selection input");
+  const count = await checkboxes.count();
+  expect(count).toBeGreaterThan(20);
+  await bar
+    .getByRole("button", { name: "Alles auswählen", exact: true })
+    .click();
+  await expect(
+    page.locator(".recipe-share-selection input:checked"),
+  ).toHaveCount(count);
+  await expect(bar).toContainText(`${count} ausgewählt`);
+  await bar
+    .getByRole("button", { name: "Alles abwählen", exact: true })
+    .click();
+  await expect(
+    page.locator(".recipe-share-selection input:checked"),
+  ).toHaveCount(0);
+  await bar
+    .getByRole("button", { name: "Alles auswählen", exact: true })
+    .click();
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.evaluate(() => window.scrollTo(0, 900));
+    await expect
+      .poll(() =>
+        page
+          .locator("header.app-header")
+          .evaluate((header) => header.getBoundingClientRect().top),
+      )
+      .toBe(0);
+    await expect
+      .poll(async () => {
+        const header = await page.locator("header.app-header").boundingBox();
+        const selection = await bar.boundingBox();
+        return Math.abs(selection!.y - (header!.y + header!.height));
+      })
+      .toBeLessThan(2);
+    await expect(
+      bar.getByRole("button", { name: "Auswahl teilen", exact: true }),
+    ).toBeInViewport();
+  }
+  await bar
+    .getByRole("button", { name: "Auswahl teilen", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Freigabelink erstellen", exact: true })
+    .click();
+  await expect(
+    page.getByRole("textbox", { name: "Freigabelink", exact: true }),
+  ).toHaveValue(/\/share#[A-Za-z0-9_-]{43}$/);
+});
+
 test("household links select only their bound destination even when the source household is active", async ({
   page,
   request,
@@ -390,7 +465,7 @@ test("recipe detail and library offer single and bulk sharing without changing t
   await checkboxes.nth(1).check();
   await expect(
     page.getByRole("region", { name: "Rezeptauswahl" }),
-  ).toContainText("2 von");
+  ).toContainText("2 ausgewählt");
   await page
     .getByRole("button", { name: "Auswahl teilen", exact: true })
     .click();

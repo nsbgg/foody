@@ -26,6 +26,9 @@
   outline-offset: 2px;
 }
 .recipe-share-selection-bar {
+  position: sticky;
+  top: var(--app-header-height, 84px);
+  z-index: 20;
   display: flex;
   align-items: center;
   flex-wrap: wrap;

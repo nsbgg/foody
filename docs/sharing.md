@@ -1,6 +1,6 @@
 # Rezepte teilen
 
-Einzelne Rezepte oder bis zu 20 ausgewählte Rezepte werden als unveränderliche Momentaufnahme geteilt. Spätere Änderungen am Original beeinflussen die Freigabe nicht. Geplante Mahlzeiten, Einkaufslisten und private Haushaltsdaten werden nicht mitgeteilt.
+Beliebig viele ausgewählte Rezepte werden als unveränderliche Momentaufnahme geteilt. Die Anzahl ist nicht begrenzt; die gemeinsame Datengröße bleibt auf 8 MiB pro Freigabe begrenzt. Spätere Änderungen am Original beeinflussen die Freigabe nicht. Geplante Mahlzeiten, Einkaufslisten und private Haushaltsdaten werden nicht mitgeteilt.
 
 ## Ziele und Ablauf
 

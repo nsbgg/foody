@@ -83,6 +83,23 @@ function App() {
   const state = useStore();
   const [view, setView] = useState<"week" | "recipes" | "shopping">("week");
   const [accountOpen, setAccountOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const updateHeight = () =>
+      document.documentElement.style.setProperty(
+        "--app-header-height",
+        `${header.getBoundingClientRect().height}px`,
+      );
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--app-header-height");
+    };
+  }, [account.loaded, account.user?.id, account.activeHouseholdId]);
   useEffect(() => {
     document.title = `${view === "week" ? "Wochenplan" : view === "recipes" ? "Gerichte" : "Einkaufsliste"} · Foody`;
   }, [view]);
@@ -132,6 +149,9 @@ function App() {
         r.data.category === filter),
   );
   const today = entries.find((e) => e.data.date === dateKey(new Date()));
+  const allFilteredSelected =
+    filtered.length > 0 &&
+    filtered.every((row) => selectedRecipes.includes(row.id));
   useEffect(() => {
     const listener = (e: Event) => {
       e.preventDefault();
@@ -480,10 +500,6 @@ function App() {
             <input
               type="checkbox"
               checked={selectedRecipes.includes(row.id)}
-              disabled={
-                !selectedRecipes.includes(row.id) &&
-                selectedRecipes.length >= 20
-              }
               onChange={(event) =>
                 setSelectedRecipes((selected) =>
                   event.target.checked
@@ -540,7 +556,7 @@ function App() {
       <a href="#main" className="skip-link">
         Zum Inhalt
       </a>
-      <header className="app-header">
+      <header className="app-header" ref={headerRef}>
         <div className="brand">
           <a href="/" aria-label="Foody Startseite">
             <img
@@ -990,17 +1006,28 @@ function App() {
                     aria-label="Rezeptauswahl"
                   >
                     <span role="status">
-                      {selectedRecipes.length} von höchstens 20 ausgewählt
+                      {selectedRecipes.length} ausgewählt
                     </span>
                     <button
                       className="text-button"
+                      disabled={!filtered.length && !selectedRecipes.length}
                       onClick={() =>
-                        setSelectedRecipes(
-                          filtered.slice(0, 20).map((row) => row.id),
+                        setSelectedRecipes((selected) =>
+                          allFilteredSelected || !filtered.length
+                            ? []
+                            : [
+                                ...new Set([
+                                  ...selected,
+                                  ...filtered.map((row) => row.id),
+                                ]),
+                              ],
                         )
                       }
                     >
-                      Sichtbare auswählen
+                      {allFilteredSelected ||
+                      (!filtered.length && selectedRecipes.length)
+                        ? "Alles abwählen"
+                        : "Alles auswählen"}
                     </button>
                     <button
                       className="primary"

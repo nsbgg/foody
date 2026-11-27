@@ -18,7 +18,6 @@ export const createRecipeShareSchema = z
     recipeIds: z
       .array(z.string().min(1).max(500))
       .min(1)
-      .max(20)
       .refine((ids) => new Set(ids).size === ids.length),
     target: recipeShareTargetSchema,
     expiresInDays: z.number().int().min(1).max(30).default(7),
