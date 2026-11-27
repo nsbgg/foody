@@ -21,12 +21,15 @@ import {
   Minus,
   GripHorizontal,
   Undo2,
+  Share2,
+  CheckSquare,
 } from "lucide-react";
 import "@fontsource/instrument-sans/400.css";
 import "@fontsource/instrument-sans/500.css";
 import "@fontsource/instrument-sans/600.css";
 import "./style.css";
 import "./account.css";
+import "./sharing.css";
 import { PwaUpdate } from "./PwaUpdate.tsx";
 import {
   useStore,
@@ -62,12 +65,17 @@ import { Shopping } from "./components/Shopping.tsx";
 import { Cook } from "./components/Cook.tsx";
 import { ConflictView } from "./components/ConflictView.tsx";
 import { ThemeToggle } from "./components/ThemeToggle.tsx";
+import {
+  ShareRecipes,
+  SharedRecipesPage,
+} from "./components/RecipeSharing.tsx";
 type Modal =
   | { type: "recipe"; row: RecipeRow | EntryRow }
   | { type: "edit"; row?: RecipeRow; draft?: Recipe }
   | { type: "import" }
   | { type: "plan"; row: RecipeRow | EntryRow }
   | { type: "cook"; row: RecipeRow | EntryRow }
+  | { type: "share"; rows: RecipeRow[] }
   | { type: "conflicts" };
 function App() {
   const account = useAccount();
@@ -84,9 +92,13 @@ function App() {
   const [modal, setModal] = useState<Modal | null>(null);
   const [notice, setNotice] = useState("");
   const [showArchive, setShowArchive] = useState(false);
+  const [selectingRecipes, setSelectingRecipes] = useState(false);
+  const [selectedRecipes, setSelectedRecipes] = useState<string[]>([]);
   const [install, setInstall] = useState<any>(null);
   useEffect(() => {
     setModal(null);
+    setSelectingRecipes(false);
+    setSelectedRecipes([]);
     setAccountOpen(false);
     cancelDrag();
     const menu = document.getElementById("account-menu");
@@ -446,6 +458,26 @@ function App() {
         onDragStart={(event) => event.preventDefault()}
       >
         {draggable && dragHandle(row)}
+        {!draggable && selectingRecipes && (
+          <label className="recipe-share-selection">
+            <input
+              type="checkbox"
+              checked={selectedRecipes.includes(row.id)}
+              disabled={
+                !selectedRecipes.includes(row.id) &&
+                selectedRecipes.length >= 20
+              }
+              onChange={(event) =>
+                setSelectedRecipes((selected) =>
+                  event.target.checked
+                    ? [...selected, row.id]
+                    : selected.filter((id) => id !== row.id),
+                )
+              }
+            />
+            <span>{row.data.title} auswählen</span>
+          </label>
+        )}
         <button
           className="image-button"
           onClick={() => setModal({ type: "recipe", row })}
@@ -879,6 +911,24 @@ function App() {
             ) : view === "recipes" ? (
               <section>
                 <div className="library-tools">
+                  <button
+                    className="secondary"
+                    aria-pressed={selectingRecipes}
+                    onClick={() => {
+                      setSelectingRecipes(!selectingRecipes);
+                      setSelectedRecipes([]);
+                    }}
+                  >
+                    <CheckSquare size={16} />
+                    {selectingRecipes ? "Auswahl beenden" : "Rezepte auswählen"}
+                  </button>
+                  <button
+                    className="text-button"
+                    onClick={() => setModal({ type: "share", rows: [] })}
+                  >
+                    <Share2 size={16} />
+                    Geteilte Rezepte
+                  </button>
                   <label className="search">
                     <Search size={17} />
                     <span className="sr-only">Gerichte suchen</span>
@@ -910,6 +960,42 @@ function App() {
                     : "Deine Rezeptsammlung"}{" "}
                   <span>{filtered.length}</span>
                 </h2>
+                {selectingRecipes && (
+                  <div
+                    className="recipe-share-selection-bar"
+                    role="region"
+                    aria-label="Rezeptauswahl"
+                  >
+                    <span role="status">
+                      {selectedRecipes.length} von höchstens 20 ausgewählt
+                    </span>
+                    <button
+                      className="text-button"
+                      onClick={() =>
+                        setSelectedRecipes(
+                          filtered.slice(0, 20).map((row) => row.id),
+                        )
+                      }
+                    >
+                      Sichtbare auswählen
+                    </button>
+                    <button
+                      className="primary"
+                      disabled={!selectedRecipes.length}
+                      onClick={() =>
+                        setModal({
+                          type: "share",
+                          rows: recipes.filter((row) =>
+                            selectedRecipes.includes(row.id),
+                          ),
+                        })
+                      }
+                    >
+                      <Share2 size={16} />
+                      Auswahl teilen
+                    </button>
+                  </div>
+                )}
                 <div className="recipe-grid">
                   {filtered.map((row) => recipeCard(row))}
                 </div>
@@ -939,7 +1025,9 @@ function App() {
           onClose={() => setModal(null)}
           fullscreen={modal.type === "cook"}
         >
-          {modal.type === "edit" ? (
+          {modal.type === "share" ? (
+            <ShareRecipes rows={modal.rows} onClose={() => setModal(null)} />
+          ) : modal.type === "edit" ? (
             <Editor
               row={modal.row}
               draft={modal.draft}
@@ -962,6 +1050,11 @@ function App() {
               }
               onPlan={() => setModal({ type: "plan", row: modal.row })}
               onCook={() => setModal({ type: "cook", row: modal.row })}
+              onShare={
+                detailSource
+                  ? () => setModal({ type: "share", rows: [detailSource] })
+                  : undefined
+              }
               onArchive={
                 modal.row.kind === "recipe" && detailSource
                   ? async () => {
@@ -1073,4 +1166,6 @@ function App() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  window.location.pathname === "/share" ? <SharedRecipesPage /> : <App />,
+);

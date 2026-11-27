@@ -1,4 +1,10 @@
-import { CookingPot, CalendarDays, Pencil, Archive } from "lucide-react";
+import {
+  CookingPot,
+  CalendarDays,
+  Pencil,
+  Archive,
+  Share2,
+} from "lucide-react";
 import { useState } from "react";
 import { recipeImages } from "../../shared/recipe-image.ts";
 import { formatAmount } from "../../shared/domain.ts";
@@ -11,12 +17,14 @@ export function RecipeDetail({
   onPlan,
   onCook,
   onArchive,
+  onShare,
 }: {
   row: RecipeRow | EntryRow;
   onEdit?: () => void;
   onPlan: () => void;
   onCook: () => void;
   onArchive?: () => void;
+  onShare?: () => void;
 }) {
   const entry = row.kind === "entry" ? (row as EntryRow) : undefined;
   const r = entry ? entry.data.recipe : (row as RecipeRow).data;
@@ -55,6 +63,12 @@ export function RecipeDetail({
       <h2>{r.title}</h2>
       <p>{r.description}</p>
       <div className="detail-actions">
+        {onShare && (
+          <button className="secondary" onClick={onShare}>
+            <Share2 size={17} />
+            Teilen
+          </button>
+        )}
         <button className="primary" onClick={onCook}>
           <CookingPot size={17} />
           Kochen

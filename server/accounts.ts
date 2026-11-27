@@ -175,6 +175,10 @@ export class AccountService {
     if (session) this.requests.set(req, session);
     return session;
   }
+  /** Read an existing login without allocating an anonymous session. */
+  authenticatedUserId(req: Request): string | null {
+    return this.requestSession(req)?.userId || null;
+  }
   session(req: Request, res: Response): AuthSession {
     let session = this.requestSession(req);
     if (!session) {

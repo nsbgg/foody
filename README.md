@@ -18,6 +18,8 @@ Zur Entwicklung: `npm run dev`, dann die von Vite angezeigte Adresse öffnen (no
 
 ## Funktionen
 
+- **Rezepte teilen:** Einzelne Rezepte oder eine Auswahl gemeinsam freigeben. Persönliche Links können an einen Account oder einen eigenen weiteren Haushalt gebunden werden. Befristete Gastlinks zeigen ausschließlich die ausgewählten Rezepte ohne Anmeldung. Empfänger übernehmen bei Bedarf unabhängige Kopien in ihren Haushalt; Freigaben lassen sich jederzeit widerrufen. Einrichtung und Grenzen: [Rezepte teilen](./docs/sharing.md).
+
 - **KI-Anbindung:** Im Account-Menü haushaltsgebundene MCP-Verbindungen mit getrennten Lese-, Schreib- und Löschrechten für Rezepte, Wochenplan und Einkaufsliste erstellen. Mehrere Rezepte auf einmal hinzufügen, bearbeiten, planen und Einkäufe abhaken oder entfernen. Schlüssel sind wahlweise befristet oder unbegrenzt gültig und einzeln widerrufbar. Einrichtung und Werkzeugliste: [MCP-Anbindung](./docs/mcp.md).
 
 - **Accounts und Haushalte:** Anmeldung mit Passwort oder Passkey, mehrere Haushalte pro Account und persönliche Einladungscodes für weitere Mitglieder. Profilbild anklicken, um Haushalte, Mitglieder, Passkeys und den Synchronisierungsstatus zu verwalten.

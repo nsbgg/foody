@@ -295,6 +295,8 @@ test("dragging near the mobile viewport edge scrolls down to the return stack", 
   await page.setViewportSize({ width: 390, height: 844 });
   const data = await addEntry(request);
   await ready(page);
+  // The fixture plans Monday; the application initially selects today's lane.
+  await page.locator(".mobile-week button").first().click();
   const handle = page.locator(`[data-entry="${data.id}"] .card-drag-handle`);
   await handle.scrollIntoViewIfNeeded();
   await startDrag(page, handle);

@@ -1,0 +1,317 @@
+.recipe-sharing {
+  min-inline-size: 0;
+}
+.recipe-share-selection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  min-block-size: 48px;
+  font-size: 13px;
+  cursor: pointer;
+  border-block-end: 1px solid var(--line);
+  background: var(--panel);
+  overflow-wrap: anywhere;
+}
+.recipe-share-selection input {
+  inline-size: 18px;
+  block-size: 18px;
+  min-block-size: 18px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--green);
+}
+.recipe-card:has(.recipe-share-selection input:checked) {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+.recipe-share-selection-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-block: 16px;
+  background: var(--selected);
+  border-radius: 8px;
+}
+.recipe-share-selection-bar > span:first-child {
+  margin-inline-end: auto;
+}
+.share-recipe-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-block: 20px;
+  padding: 16px;
+  background: var(--panel);
+  border-inline-start: 3px solid var(--green);
+  border-radius: 0 8px 8px 0;
+}
+.share-recipe-summary > svg {
+  color: var(--green);
+  margin-block-start: 2px;
+}
+.share-recipe-summary > div {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.share-recipe-summary strong {
+  font-size: 16px;
+}
+.dialog .share-recipe-summary p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.recipe-sharing fieldset {
+  margin-block: 24px 16px;
+  min-inline-size: 0;
+}
+.share-targets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-block-end: 20px;
+}
+.share-targets button {
+  min-inline-size: 0;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 14px 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  text-align: center;
+}
+.share-targets button[aria-pressed="true"] {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--selected);
+}
+.share-targets button small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-block-start: 3px;
+}
+.share-targets button:disabled {
+  opacity: 0.6;
+}
+.recipe-sharing form label {
+  display: block;
+  margin-block: 16px;
+}
+.share-field-hint {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-block-start: 6px;
+}
+.share-created {
+  padding: 18px;
+  margin-block: 24px;
+  background: var(--selected);
+  border: 1px solid var(--green);
+  border-radius: 8px;
+}
+.share-created strong {
+  color: var(--green);
+}
+.dialog .share-created p {
+  font-size: 13px;
+  margin-block: 8px 12px;
+}
+.share-copy {
+  display: flex;
+  gap: 8px;
+}
+.share-copy input {
+  min-inline-size: 0;
+  margin: 0;
+  font-size: 13px;
+}
+.share-copy button {
+  flex-shrink: 0;
+}
+.share-management {
+  border-block-start: 1px solid var(--line);
+  padding-block-start: 4px;
+  margin-block-start: 24px;
+}
+.share-management ul {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+.share-management li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 14px;
+  border-block-end: 1px solid var(--line);
+}
+.share-management li > div {
+  min-inline-size: 0;
+}
+.share-management strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.share-management li > div > span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  margin-block-start: 4px;
+}
+.share-management li > button {
+  flex-shrink: 0;
+  min-inline-size: 44px;
+  min-block-size: 44px;
+}
+.share-revoke-confirm {
+  margin-block-start: 12px;
+}
+.dialog .share-revoke-confirm p {
+  margin: 0;
+  font-size: 13px;
+}
+.share-done {
+  margin-block-start: 12px;
+}
+.shared-recipes-page {
+  max-inline-size: 880px;
+  margin-inline: auto;
+}
+.share-page-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-block-end: 28px;
+}
+.share-page-heading > svg {
+  color: var(--green);
+  margin-block-start: 3px;
+}
+.share-page-heading h1 {
+  font-size: clamp(26px, 4vw, 38px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+.share-page-heading p {
+  color: var(--muted);
+  margin-block-start: 8px;
+}
+.share-save-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 18px 20px;
+  background: var(--selected);
+  border-radius: 10px;
+  margin-block: 24px;
+}
+.share-save-bar label {
+  display: grid;
+  gap: 6px;
+  flex: 1;
+  min-inline-size: min(220px, 100%);
+  font-size: 13px;
+}
+.share-save-bar select {
+  margin: 0;
+}
+.share-save-bar > p {
+  flex: 1;
+  min-inline-size: min(220px, 100%);
+}
+.shared-recipe-list {
+  display: grid;
+  gap: 32px;
+}
+.shared-recipe {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.shared-recipe > .food-art {
+  inline-size: 100%;
+  block-size: 240px;
+  object-fit: cover;
+}
+.shared-recipe-content {
+  padding: clamp(20px, 4vw, 36px);
+}
+.shared-recipe-content h2 {
+  font-size: clamp(23px, 3vw, 32px);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin-block: 6px 14px;
+}
+.shared-recipe-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 13px;
+  margin-block-end: 18px;
+}
+.shared-recipe-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.shared-recipe-content > p {
+  max-inline-size: 65ch;
+}
+.shared-recipe-content h3 {
+  font-size: 16px;
+  margin-block: 28px 14px;
+}
+.shared-recipe-content .recipe-steps {
+  max-inline-size: 70ch;
+}
+.share-home-link {
+  display: inline-block;
+  margin-block-start: 28px;
+}
+.share-login-return {
+  position: fixed;
+  inset-block-end: 16px;
+  inset-inline-start: 16px;
+  z-index: 10;
+}
+.share-login-return button {
+  background: var(--surface);
+}
+@media (max-width: 480px) {
+  .share-targets {
+    gap: 6px;
+  }
+  .share-targets button {
+    font-size: 13px;
+    padding-inline: 5px;
+  }
+  .share-targets small {
+    line-height: 1.35;
+  }
+  .share-copy {
+    flex-wrap: wrap;
+  }
+  .share-copy button {
+    inline-size: 100%;
+  }
+  .share-save-bar > button {
+    inline-size: 100%;
+  }
+  .shared-recipe > .food-art {
+    block-size: 180px;
+  }
+}
