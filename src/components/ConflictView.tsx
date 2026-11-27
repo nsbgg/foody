@@ -21,6 +21,7 @@ function Version({ kind, data }: { kind: Kind; data?: Row["data"] }) {
         <p>
           {entry.date} · {entry.servings} Portionen
         </p>
+        <p>{entry.cooked ? "Gekocht" : "Noch nicht gekocht"}</p>
         {entry.deleted && <p>Aus dem Plan entfernt</p>}
         <Version kind="recipe" data={entry.recipe} />
       </>

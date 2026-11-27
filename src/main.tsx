@@ -23,6 +23,7 @@ import {
   Undo2,
   Share2,
   CheckSquare,
+  Check,
 } from "lucide-react";
 import "@fontsource/instrument-sans/400.css";
 import "@fontsource/instrument-sans/500.css";
@@ -90,6 +91,8 @@ function App() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("Alle");
   const [modal, setModal] = useState<Modal | null>(null);
+  const activeModal = useRef(modal);
+  activeModal.current = modal;
   const [notice, setNotice] = useState("");
   const [showArchive, setShowArchive] = useState(false);
   const [selectingRecipes, setSelectingRecipes] = useState(false);
@@ -153,6 +156,20 @@ function App() {
       deleted: false,
     });
     setNotice(`${recipe.title} eingeplant`);
+  }
+  async function markCooked(row: RecipeRow | EntryRow, cooked: boolean) {
+    if (row.kind !== "entry") return true;
+    const current = state.rows.find(
+      (entry) => entry.kind === "entry" && entry.id === row.id,
+    ) as EntryRow | undefined;
+    if (!current || current.data.deleted || !!current.data.cooked === cooked)
+      return true;
+    return change(
+      "entry",
+      current.id,
+      { ...current.data, cooked },
+      current.rev,
+    );
   }
   function move(row: EntryRow, date: string, before?: EntryRow) {
     if (before?.id === row.id && row.data.date === date) return;
@@ -700,7 +717,7 @@ function App() {
                             <div className="day-meals">
                               {meals.map((row) => (
                                 <article
-                                  className="meal has-drag-handle"
+                                  className={`meal has-drag-handle${row.data.cooked ? " is-cooked" : ""}`}
                                   key={row.id}
                                   data-entry={row.id}
                                   onDragStart={(event) =>
@@ -728,6 +745,12 @@ function App() {
                                         {row.data.recipe.title}
                                       </button>
                                       <span className="meal-meta">
+                                        {row.data.cooked && (
+                                          <span>
+                                            <Check size={13} />
+                                            Gekocht
+                                          </span>
+                                        )}
                                         <span>
                                           <Clock3 size={13} />
                                           {row.data.recipe.minutes} Min.
@@ -1149,7 +1172,10 @@ function App() {
           ) : modal.type === "cook" ? (
             <Cook
               row={modal.row}
-              onDone={() => {
+              onRestart={() => markCooked(modal.row, false)}
+              onDone={async () => {
+                if (!(await markCooked(modal.row, true))) return;
+                if (activeModal.current !== modal) return;
                 setView("week");
                 setModal(null);
               }}

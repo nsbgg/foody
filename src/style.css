@@ -557,6 +557,9 @@ main.shopping-main {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
 }
+.meal.is-cooked {
+  opacity: 0.5;
+}
 .meal-layout > .food-art {
   inline-size: 100%;
   block-size: 88px;

@@ -195,10 +195,13 @@ function PageControls({
 export function Cook({
   row,
   onDone,
+  onRestart,
 }: {
   row: RecipeRow | EntryRow;
-  onDone: () => void;
+  onDone: () => void | Promise<void>;
+  onRestart?: () => boolean | Promise<boolean>;
 }) {
+  const [finishing, setFinishing] = useState(false);
   const entry = row.kind === "entry" ? (row.data as Entry) : null;
   const recipe = entry?.recipe || (row.data as Recipe);
   const servings = entry?.servings || recipe.servings;
@@ -527,10 +530,21 @@ export function Cook({
       <footer className={`cook-nav${done ? " is-complete" : ""}`}>
         <button
           className="secondary"
-          disabled={step === 0}
-          onClick={() => {
-            if (done) setCheckedIngredients([]);
-            setStep(done ? 0 : step - 1);
+          disabled={step === 0 || finishing}
+          onClick={async () => {
+            if (!done) {
+              setStep(step - 1);
+              return;
+            }
+            if (finishing) return;
+            setFinishing(true);
+            try {
+              if ((await onRestart?.()) === false) return;
+              setCheckedIngredients([]);
+              setStep(0);
+            } finally {
+              setFinishing(false);
+            }
           }}
         >
           {done ? (
@@ -543,11 +557,24 @@ export function Cook({
         <button
           className="primary"
           disabled={
-            !done &&
-            (stepPages.pages.length === 0 ||
-              currentPage < stepPages.pages.length - 1)
+            finishing ||
+            (!done &&
+              (stepPages.pages.length === 0 ||
+                currentPage < stepPages.pages.length - 1))
           }
-          onClick={() => (done ? onDone() : setStep(step + 1))}
+          onClick={async () => {
+            if (!done) {
+              setStep(step + 1);
+              return;
+            }
+            if (finishing) return;
+            setFinishing(true);
+            try {
+              await onDone();
+            } finally {
+              setFinishing(false);
+            }
+          }}
         >
           <span>
             {done

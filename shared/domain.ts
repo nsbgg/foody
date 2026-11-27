@@ -32,6 +32,7 @@ export const recipeSchema = z.object({
 export type Ingredient = z.infer<typeof ingredientSchema>;
 export type Recipe = z.infer<typeof recipeSchema>;
 export const entrySchema = z.object({
+  cooked: z.boolean().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   recipeId: z.string(),
   recipe: recipeSchema,
